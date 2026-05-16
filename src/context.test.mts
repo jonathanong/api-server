@@ -68,6 +68,20 @@ describe("Context", () => {
     });
   });
 
+  it("ctx.query treats prototype property names as data", async () => {
+    const app = new Application();
+    app.route("/test").get((ctx) => {
+      ctx.json(ctx.query);
+    });
+
+    await withServer(app.callback(), async (server) => {
+      const res = await request(server).get("/test?__proto__=polluted&constructor=value");
+      expect(Object.hasOwn(res.body, "__proto__")).toBe(true);
+      expect(res.body["__proto__"]).toBe("polluted");
+      expect(res.body.constructor).toBe("value");
+    });
+  });
+
   it("ctx.query empty when no query string", async () => {
     const app = new Application();
     app.route("/test").get((ctx) => {

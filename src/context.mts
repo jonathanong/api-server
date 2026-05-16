@@ -67,7 +67,7 @@ export class Context {
     }
     const queryString = url.slice(questionMark + 1);
     const params = new URLSearchParams(queryString);
-    const result: Record<string, string | string[]> = {};
+    const result: Record<string, string | string[]> = Object.create(null);
     for (const [key, value] of params) {
       const current = result[key];
       if (current === undefined) {
