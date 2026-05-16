@@ -1,0 +1,78 @@
+{
+  "name": "@jongleberry/api-server",
+  "version": "1.0.0",
+  "description": "A Node.js HTTP server library",
+  "license": "MIT",
+  "author": "Jonathan Ong",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "dependencies": {
+    "bytes": "^3.1.2",
+    "compressible": "^2.0.18",
+    "cookie": "^1.1.1",
+    "find-my-way": "^9.6.0",
+    "http-assert": "^1.5.0",
+    "http-errors": "^2.0.1",
+    "negotiator": "^1.0.0",
+    "type-is": "^2.1.0"
+  },
+  "devDependencies": {
+    "@types/bytes": "^3.1.5",
+    "@types/compressible": "^2.0.3",
+    "@types/http-assert": "^1.5.6",
+    "@types/http-errors": "^2.0.5",
+    "@types/negotiator": "^0.6.4",
+    "@types/node": "^25.8.0",
+    "@types/supertest": "^7.2.0",
+    "@types/type-is": "^1.6.7",
+    "@vitest/coverage-v8": "^4.1.6",
+    "husky": "^9.1.7",
+    "oxfmt": "^0.50.0",
+    "oxlint": "^1.65.0",
+    "supertest": "^7.2.2",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.6"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "prepare": "node scripts/install-husky.mjs",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint src/",
+    "format": "oxfmt src/ docs/ README.md",
+    "format:check": "oxfmt --check src/ docs/ README.md",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage && node scripts/strip-lcov-branches.mjs",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "http",
+    "server",
+    "node",
+    "api",
+    "express",
+    "koa",
+    "router"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jongleberry/api-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jongleberry/api-server/issues"
+  },
+  "homepage": "https://github.com/jongleberry/api-server"
+}
