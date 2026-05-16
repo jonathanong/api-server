@@ -50,7 +50,7 @@ After augmentation, TypeScript recognises the added methods:
 
 ```ts
 app.route("/test").get((ctx) => {
-  ctx.ok();           // no cast needed
+  ctx.ok(); // no cast needed
   ctx.sendError(404, "Not found");
 });
 ```

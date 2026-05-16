@@ -3,10 +3,10 @@
 Every response includes timing information via the `Server-Timing` header. Two
 measurements are reported:
 
-| Metric | Measures |
-|--------|----------|
-| `responseStarted` | Time from request receipt to the moment `writeHead` is called |
-| `responseFinished` | Time from `writeHead` to the end of the response body |
+| Metric             | Measures                                                      |
+| ------------------ | ------------------------------------------------------------- |
+| `responseStarted`  | Time from request receipt to the moment `writeHead` is called |
+| `responseFinished` | Time from `writeHead` to the end of the response body         |
 
 Both durations are in milliseconds with three decimal places.
 

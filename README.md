@@ -8,34 +8,34 @@ A lightweight Node.js HTTP server library built on a trie router with automatic 
 npm install @jongleberry/api-server
 ```
 
-Requires Node.js ≥ 22.
+Requires Node.js ≥ 24.
 
 ## Quick start
 
 ```ts
-import http from 'node:http'
-import { Application } from '@jongleberry/api-server'
+import http from "node:http";
+import { Application } from "@jongleberry/api-server";
 
-const app = new Application()
+const app = new Application();
 
-app.route('/hello').get(ctx => {
-  ctx.json({ hello: 'world' })
-})
+app.route("/hello").get((ctx) => {
+  ctx.json({ hello: "world" });
+});
 
-app.route('/users/:id').get(ctx => {
-  ctx.json({ id: ctx.params.id })
-})
+app.route("/users/:id").get((ctx) => {
+  ctx.json({ id: ctx.params.id });
+});
 
-http.createServer(app.callback()).listen(3000)
+http.createServer(app.callback()).listen(3000);
 ```
 
 Or use the factory shorthand:
 
 ```ts
-import { createApp } from '@jongleberry/api-server'
+import { createApp } from "@jongleberry/api-server";
 
-const app = createApp()
-app.route('/').get(ctx => ctx.json({ ok: true }))
+const app = createApp();
+app.route("/").get((ctx) => ctx.json({ ok: true }));
 ```
 
 ## Features
@@ -50,37 +50,37 @@ app.route('/').get(ctx => ctx.json({ ok: true }))
 - **AsyncLocalStorage** — per-request store via `app.setAsyncLocalStorage(als)`
 - **Cookies** — `ctx.cookies.get()` / `.set()` with full `Set-Cookie` options
 - **Cache-Control** — `ctx.cacheControl(visibility, maxAge)` helper
-- **Trusted client IP** — `cf-connecting-ip` → `x-forwarded-for[0]` → `socket.remoteAddress`
+- **Trusted client IP** — Cloudflare/AWS ALB-aware helper for Node, Deno, and Bun
 - **Dev logger** — concurrent-request bar, color-coded status codes, timing thresholds; silent in `NODE_ENV=production` and `NODE_ENV=test`
 - **Error safety net** — error handlers that throw or return without a response still guarantee the client receives a response
 
 ## Requirements
 
-- Node.js ≥ 22.0.0
+- Node.js ≥ 24.0.0
 - ESM (`"type": "module"` or `.mjs` imports)
 
 ## Documentation
 
 See [docs/](docs/README.md) for full API reference:
 
-| Topic | Description |
-|---|---|
-| [Getting started](docs/getting-started.md) | Install, hello world, mounting on http.createServer |
-| [Routing](docs/routing.md) | Route registration, params, notFoundHandler |
-| [Context](docs/context.md) | Full `ctx` API surface |
-| [Request](docs/request.md) | Body parsing, size limits, content-type detection |
-| [Response](docs/response.md) | Buffered and streaming responses |
-| [ETag and caching](docs/etag-and-caching.md) | Automatic ETags, 304s, Cache-Control |
-| [Compression](docs/compression.md) | br/gzip/deflate negotiation |
-| [Server-Timing](docs/server-timing.md) | Response latency headers and trailers |
-| [Cookies](docs/cookies.md) | Reading and writing cookies |
-| [Error handling](docs/error-handling.md) | errorHandler, notFoundHandler, http-errors |
-| [Async local storage](docs/async-local-storage.md) | Per-request store |
-| [Abort signals](docs/abort-signals.md) | Client-disconnect propagation |
-| [Logger](docs/logger.md) | Dev logger configuration |
-| [Trusted client IP](docs/trusted-client-ip.md) | IP resolution precedence |
-| [Extending context](docs/extending-context.md) | Adding methods to ctx |
-| [Testing](docs/testing.md) | Testing patterns with vitest and supertest |
+| Topic                                              | Description                                         |
+| -------------------------------------------------- | --------------------------------------------------- |
+| [Getting started](docs/getting-started.md)         | Install, hello world, mounting on http.createServer |
+| [Routing](docs/routing.md)                         | Route registration, params, notFoundHandler         |
+| [Context](docs/context.md)                         | Full `ctx` API surface                              |
+| [Request](docs/request.md)                         | Body parsing, size limits, content-type detection   |
+| [Response](docs/response.md)                       | Buffered and streaming responses                    |
+| [ETag and caching](docs/etag-and-caching.md)       | Automatic ETags, 304s, Cache-Control                |
+| [Compression](docs/compression.md)                 | br/gzip/deflate negotiation                         |
+| [Server-Timing](docs/server-timing.md)             | Response latency headers and trailers               |
+| [Cookies](docs/cookies.md)                         | Reading and writing cookies                         |
+| [Error handling](docs/error-handling.md)           | errorHandler, notFoundHandler, http-errors          |
+| [Async local storage](docs/async-local-storage.md) | Per-request store                                   |
+| [Abort signals](docs/abort-signals.md)             | Client-disconnect propagation                       |
+| [Logger](docs/logger.md)                           | Dev logger configuration                            |
+| [Trusted client IP](docs/trusted-client-ip.md)     | Node, Deno, and Bun client IP helpers               |
+| [Extending context](docs/extending-context.md)     | Adding methods to ctx                               |
+| [Testing](docs/testing.md)                         | Testing patterns with vitest and supertest          |
 
 ## Design
 

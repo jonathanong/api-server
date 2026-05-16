@@ -12,10 +12,10 @@ all other environments (including no `NODE_ENV` set) it is enabled.
 
 The log level is controlled by the `LOG_LEVEL` environment variable.
 
-| `LOG_LEVEL` | Behavior |
-|-------------|----------|
+| `LOG_LEVEL`        | Behavior                                             |
+| ------------------ | ---------------------------------------------------- |
 | `"info"` (default) | Logs all requests with concurrency-bar visualization |
-| `"error"` | Logs only 5xx responses; 2xx and 4xx are silent |
+| `"error"`          | Logs only 5xx responses; 2xx and 4xx are silent      |
 
 ```sh
 LOG_LEVEL=info  node server.mjs   # full output
@@ -47,12 +47,12 @@ are active:
 
 Response times are colored based on configurable thresholds:
 
-| Threshold | Color |
-|-----------|-------|
-| < yellow | no color |
-| >= yellow | yellow |
-| >= orange | orange |
-| >= red | red |
+| Threshold | Color    |
+| --------- | -------- |
+| < yellow  | no color |
+| >= yellow | yellow   |
+| >= orange | orange   |
+| >= red    | red      |
 
 Default thresholds (milliseconds):
 
@@ -78,9 +78,9 @@ const app = createApp({
 
 Status codes in the concurrency-bar output are also colored:
 
-| Range | Color |
-|-------|-------|
-| 2xx | green |
-| 3xx | cyan |
-| 4xx | orange |
-| 5xx | red |
+| Range | Color  |
+| ----- | ------ |
+| 2xx   | green  |
+| 3xx   | cyan   |
+| 4xx   | orange |
+| 5xx   | red    |

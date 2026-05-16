@@ -61,10 +61,10 @@ expect(second.status).toBe(304);
 Requires a TTL. The value may be a number (seconds) or a human-readable string:
 
 ```ts
-ctx.cacheControl("public", 3600);          // Cache-Control: public, max-age=3600
-ctx.cacheControl("public", "1 hour");      // same
-ctx.cacheControl("public", "30 minutes");  // public, max-age=1800
-ctx.cacheControl("public", "7 days");      // public, max-age=604800
+ctx.cacheControl("public", 3600); // Cache-Control: public, max-age=3600
+ctx.cacheControl("public", "1 hour"); // same
+ctx.cacheControl("public", "30 minutes"); // public, max-age=1800
+ctx.cacheControl("public", "7 days"); // public, max-age=604800
 ```
 
 Supported units: `second(s)`, `minute(s)`, `hour(s)`, `day(s)`, `week(s)`,
