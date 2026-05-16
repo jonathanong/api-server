@@ -49,7 +49,9 @@ stop when the client disconnects. See [abort-signals.md](abort-signals.md).
 ctx.ip; // string | undefined
 ```
 
-Resolves `cf-connecting-ip` → `x-forwarded-for[0]` → `socket.remoteAddress`.
+By default this resolves the socket remote address only. When the app is
+created with `trustProxy: true`, it resolves
+`cf-connecting-ip` → `x-forwarded-for[0]` → `socket.remoteAddress`.
 See [trusted-client-ip.md](trusted-client-ip.md).
 
 ## AsyncLocalStorage store

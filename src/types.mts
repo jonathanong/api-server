@@ -11,5 +11,7 @@ export interface CookieOptions {
 }
 
 export interface ApplicationOptions {
+  bodyLimit?: string | number | false;
   logger?: LoggerOptions;
+  trustProxy?: boolean;
 }

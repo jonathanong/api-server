@@ -10,27 +10,34 @@ export class Request {
   private req: IncomingMessage;
   private res: ServerResponse;
   private bodyPromise: Promise<Buffer> | null = null;
+  private defaultLimit: string | number | false;
 
-  constructor(req: IncomingMessage, res: ServerResponse) {
+  constructor(
+    req: IncomingMessage,
+    res: ServerResponse,
+    defaultLimit: string | number | false = "1mb",
+  ) {
     this.req = req;
     this.res = res;
+    this.defaultLimit = defaultLimit;
   }
 
   is(type: string | string[]): string | false | null {
     return typeIs(this.req, Array.isArray(type) ? type : [type]);
   }
 
-  buffer(limit?: string | number): Promise<Buffer> {
+  buffer(limit?: string | number | false): Promise<Buffer> {
     if (!this.bodyPromise) {
+      const effectiveLimit = limit ?? this.defaultLimit;
       if (this.req.headers.expect === "100-continue") {
         this.res.writeContinue();
       }
-      this.bodyPromise = readBody(this.req, limit);
+      this.bodyPromise = readBody(this.req, effectiveLimit);
     }
     return this.bodyPromise;
   }
 
-  async json<T = unknown>(limit?: string | number): Promise<T> {
+  async json<T = unknown>(limit?: string | number | false): Promise<T> {
     const buf = await this.buffer(limit);
     try {
       return JSON.parse(buf.toString("utf8")) as T;
@@ -40,9 +47,18 @@ export class Request {
   }
 }
 
-function readBody(req: IncomingMessage, limit?: string | number): Promise<Buffer> {
+function parseLimit(limit: string | number | false): number {
+  if (limit === false) return Infinity;
+  const parsed = typeof limit === "number" ? limit : bytes.parse(limit);
+  if (parsed === null || parsed === undefined || !Number.isFinite(parsed) || parsed < 0) {
+    throw new TypeError(`Invalid request body limit: ${String(limit)}`);
+  }
+  return parsed;
+}
+
+function readBody(req: IncomingMessage, limit: string | number | false): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const maxBytes: number = limit !== undefined ? (bytes.parse(limit) ?? Infinity) : Infinity;
+    const maxBytes = parseLimit(limit);
     const chunks: Buffer[] = [];
     let totalLength = 0;
 

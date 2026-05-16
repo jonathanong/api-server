@@ -136,6 +136,12 @@ describe("shouldCompress", () => {
     expect(shouldCompress(req, res, "application/json", 2000)).toBe("gzip");
   });
 
+  it("returns null for buffered bodies above the sync compression limit", () => {
+    const req = makeReq({ "accept-encoding": "gzip" });
+    const res = makeRes();
+    expect(shouldCompress(req, res, "application/json", 1024 * 1024 + 1)).toBeNull();
+  });
+
   it("returns null when Content-Encoding already set", () => {
     const req = makeReq({ "accept-encoding": "gzip" });
     const res = makeRes({ "content-encoding": "gzip" });

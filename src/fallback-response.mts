@@ -1,12 +1,13 @@
 import type { ServerResponse } from "node:http";
 
-const FALLBACK_STATUS = 404;
 const FALLBACK_BODY = "Not Found";
+const ERROR_STATUS = 500;
+const ERROR_BODY = "Internal Server Error";
 
 export function sendFallback(res: ServerResponse): void {
   try {
-    res.writeHead(FALLBACK_STATUS);
-    res.end(FALLBACK_BODY);
+    res.writeHead(ERROR_STATUS);
+    res.end(ERROR_BODY);
   } catch {
     // Socket may already be destroyed; nothing more we can do.
   }
@@ -14,8 +15,14 @@ export function sendFallback(res: ServerResponse): void {
 
 export function getFallbackStatus(error: unknown): number {
   const status = (error as { status?: unknown } | null)?.status;
-  if (typeof status === "number" && Number.isInteger(status) && status >= 100 && status < 600) {
+  if (typeof status === "number" && Number.isInteger(status) && status >= 400 && status < 600) {
     return status;
   }
-  return FALLBACK_STATUS;
+  return ERROR_STATUS;
+}
+
+export function getFallbackBody(error: unknown, status: number): string {
+  if (status >= 500) return ERROR_BODY;
+  const message = (error as { message?: unknown } | null)?.message;
+  return typeof message === "string" && message ? message : FALLBACK_BODY;
 }

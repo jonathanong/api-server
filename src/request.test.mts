@@ -196,7 +196,7 @@ describe("Request", () => {
     });
   });
 
-  it("buffer() with invalid limit string treats it as no limit", async () => {
+  it("buffer() with invalid limit string rejects as a server error", async () => {
     const app = new Application();
     app.route("/test").post(async (ctx) => {
       const buf = await ctx.request.buffer("banana");
@@ -208,6 +208,40 @@ describe("Request", () => {
         .post("/test")
         .set("Content-Type", "application/octet-stream")
         .send(Buffer.from("hello"));
+      expect(res.status).toBe(500);
+      expect(res.text).toBe("Internal Server Error");
+    });
+  });
+
+  it("uses the application bodyLimit when no per-call limit is provided", async () => {
+    const app = new Application({ bodyLimit: "4b" });
+    app.route("/test").post(async (ctx) => {
+      await ctx.request.buffer();
+      ctx.json({ ok: true });
+    });
+
+    await withServer(app.callback(), async (server) => {
+      const res = await request(server)
+        .post("/test")
+        .set("Content-Type", "application/octet-stream")
+        .send(Buffer.from("hello"));
+      expect(res.status).toBe(413);
+    });
+  });
+
+  it("allows bodyLimit false to disable the application default limit", async () => {
+    const app = new Application({ bodyLimit: false });
+    app.route("/test").post(async (ctx) => {
+      const buf = await ctx.request.buffer();
+      ctx.json({ length: buf.length });
+    });
+
+    await withServer(app.callback(), async (server) => {
+      const res = await request(server)
+        .post("/test")
+        .set("Content-Type", "application/octet-stream")
+        .send(Buffer.from("hello"));
+      expect(res.status).toBe(200);
       expect(res.body.length).toBe(5);
     });
   });

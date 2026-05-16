@@ -31,6 +31,7 @@ export class Context {
 
   private queryCache: Record<string, string | string[]> | null = null;
   private asyncLocalStorage: AsyncLocalStorage<unknown> | null;
+  private trustProxy: boolean;
 
   constructor(
     req: IncomingMessage,
@@ -39,18 +40,21 @@ export class Context {
     timing: ServerTiming,
     als: AsyncLocalStorage<unknown> | null,
     abortController: AbortController,
+    bodyLimit: string | number | false,
+    trustProxy: boolean,
     onWriteHead?: () => void,
   ) {
     this.req = req;
     this.res = res;
     this.params = params;
-    this.request = new Request(req, res);
+    this.request = new Request(req, res, bodyLimit);
     this.response = new Response(req, res, timing, onWriteHead);
     this.cookies = new Cookies(req, res);
     this.abortController = abortController;
     this.signal = abortController.signal;
     this.assert = httpAssert;
     this.asyncLocalStorage = als;
+    this.trustProxy = trustProxy;
   }
 
   get query(): Record<string, string | string[]> {
@@ -64,9 +68,15 @@ export class Context {
     const queryString = url.slice(questionMark + 1);
     const params = new URLSearchParams(queryString);
     const result: Record<string, string | string[]> = {};
-    for (const key of params.keys()) {
-      const values = params.getAll(key);
-      result[key] = values.length === 1 ? values[0] : values;
+    for (const [key, value] of params) {
+      const current = result[key];
+      if (current === undefined) {
+        result[key] = value;
+      } else if (Array.isArray(current)) {
+        current.push(value);
+      } else {
+        result[key] = [current, value];
+      }
     }
     this.queryCache = result;
     return this.queryCache;
@@ -78,7 +88,7 @@ export class Context {
 
   get ip(): string | undefined {
     return resolveTrustedClientIp({
-      headers: this.req.headers,
+      headers: this.trustProxy ? this.req.headers : undefined,
       socketRemoteAddress: this.req.socket?.remoteAddress,
     });
   }

@@ -56,6 +56,18 @@ describe("Context", () => {
     });
   });
 
+  it("ctx.query appends more than two values for the same key", async () => {
+    const app = new Application();
+    app.route("/test").get((ctx) => {
+      ctx.json(ctx.query);
+    });
+
+    await withServer(app.callback(), async (server) => {
+      const res = await request(server).get("/test?tag=a&tag=b&tag=c");
+      expect(res.body.tag).toEqual(["a", "b", "c"]);
+    });
+  });
+
   it("ctx.query empty when no query string", async () => {
     const app = new Application();
     app.route("/test").get((ctx) => {
@@ -212,6 +224,30 @@ describe("Context", () => {
       const res = await request(server).get("/test");
       // In test environment, ip may be undefined or a loopback
       expect(res.body.ip === null || typeof res.body.ip === "string").toBe(true);
+    });
+  });
+
+  it("ctx.ip ignores forwarded headers unless trustProxy is enabled", async () => {
+    const app = new Application();
+    app.route("/test").get((ctx) => {
+      ctx.json({ ip: ctx.ip ?? null });
+    });
+
+    await withServer(app.callback(), async (server) => {
+      const res = await request(server).get("/test").set("X-Forwarded-For", "203.0.113.10");
+      expect(res.body.ip).not.toBe("203.0.113.10");
+    });
+  });
+
+  it("ctx.ip uses forwarded headers when trustProxy is enabled", async () => {
+    const app = new Application({ trustProxy: true });
+    app.route("/test").get((ctx) => {
+      ctx.json({ ip: ctx.ip ?? null });
+    });
+
+    await withServer(app.callback(), async (server) => {
+      const res = await request(server).get("/test").set("X-Forwarded-For", "203.0.113.10");
+      expect(res.body.ip).toBe("203.0.113.10");
     });
   });
 
