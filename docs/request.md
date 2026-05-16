@@ -5,9 +5,11 @@ and inspecting the `Content-Type` header.
 
 ## request.buffer(limit?)
 
-Reads the raw request body into a `Buffer`. The optional `limit` argument
-accepts a byte count (number) or a human-readable string such as `"1mb"` or
-`"512kb"` (parsed by the `bytes` package).
+Reads the raw request body into a `Buffer`. By default, requests are limited to
+the app's `bodyLimit` option, which defaults to `"1mb"`. The optional `limit`
+argument accepts a byte count (number), a human-readable string such as
+`"1mb"` or `"512kb"` (parsed by the `bytes` package), or `false` to disable the
+limit for that call.
 
 ```ts
 app.route("/upload").post(async (ctx) => {
@@ -50,6 +52,9 @@ app.route("/items").post(async (ctx) => {
 // With a size limit
 const body = await ctx.request.json("256kb");
 ```
+
+Invalid limit strings are treated as programmer errors and produce a `500`
+response through the default error handler.
 
 ## request.is(type)
 

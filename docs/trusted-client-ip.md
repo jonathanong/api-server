@@ -1,7 +1,14 @@
 # Trusted Client IP
 
-`ctx.ip` resolves the client's IP address from request headers and the
-underlying runtime remote address, following this precedence:
+`ctx.ip` resolves the client's IP address from the underlying socket remote
+address by default. Proxy headers are trusted only when the app is created with
+`trustProxy: true`.
+
+```ts
+const app = createApp({ trustProxy: true });
+```
+
+With `trustProxy: true`, `ctx.ip` follows this precedence:
 
 1. `cf-connecting-ip` — set by Cloudflare
 2. `x-forwarded-for` — first value (leftmost IP), set by reverse proxies
@@ -87,10 +94,11 @@ available.
 
 ## Security caveat
 
-Only trust `cf-connecting-ip` and `x-forwarded-for` when your server sits
+Only enable `trustProxy` or otherwise trust `cf-connecting-ip` and
+`x-forwarded-for` when your server sits
 behind a known, trusted proxy that sets these headers. If the server is
 directly internet-facing, a client can forge these headers and claim any IP
-address.
+address. The framework default is `trustProxy: false`.
 
 In untrusted Node environments, use `socket.remoteAddress` directly:
 

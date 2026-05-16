@@ -12,11 +12,13 @@ header using the `negotiator` package. Supported encodings in preference order:
 If the client does not advertise any of these, or advertises only `identity`,
 compression is skipped.
 
-## 1 KB threshold for buffered responses
+## Buffered response size window
 
 Buffered responses (`json`, `text`, `html`, `xml`, `buffer`) are only
-compressed when the body is **at least 1024 bytes**. Smaller bodies are sent
-uncompressed regardless of `Accept-Encoding`.
+compressed when the body is **at least 1024 bytes** and at most **1 MB**.
+Smaller and larger bodies are sent uncompressed regardless of
+`Accept-Encoding`. Use `pipeline()` for large responses that need compression
+without synchronous buffered compression work.
 
 ```ts
 // Body < 1024 bytes — no compression even if client requests it
@@ -24,7 +26,7 @@ app.route("/small").get((ctx) => {
   ctx.json({ ok: true });
 });
 
-// Body >= 1024 bytes — compressed if client supports it
+// Body >= 1024 bytes and <= 1 MB — compressed if client supports it
 app.route("/large").get((ctx) => {
   ctx.json({ data: "x".repeat(2000) });
 });

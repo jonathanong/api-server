@@ -7,7 +7,7 @@ import Router from "find-my-way";
 import { ServerTiming } from "./server-timing.mts";
 import { Logger } from "./logger.mts";
 import type { ApplicationOptions } from "./types.mts";
-import { getFallbackStatus, sendFallback } from "./fallback-response.mts";
+import { getFallbackBody, getFallbackStatus, sendFallback } from "./fallback-response.mts";
 export type ErrorHandler = (ctx: Context, error: Error) => Promise<void> | void;
 export type NotFoundHandler = (ctx: Context) => Promise<void> | void;
 
@@ -19,10 +19,14 @@ export class Application extends EventEmitter {
   private extensions: Record<string, unknown> = {};
   private contextClass: typeof Context = Context;
   private logger: Logger;
+  private bodyLimit: string | number | false;
+  private trustProxy: boolean;
 
   constructor(options?: ApplicationOptions) {
     super();
     this.logger = new Logger(options?.logger);
+    this.bodyLimit = options?.bodyLimit ?? "1mb";
+    this.trustProxy = options?.trustProxy ?? false;
   }
 
   route(path: string): RouteBuilder {
@@ -99,6 +103,8 @@ export class Application extends EventEmitter {
       timing,
       this.asyncLocalStorage,
       abortController,
+      this.bodyLimit,
+      this.trustProxy,
       onWriteHead,
     );
 
@@ -155,8 +161,9 @@ export class Application extends EventEmitter {
           sendFallback(res);
         }
       } else if (!res.headersSent) {
-        res.writeHead(getFallbackStatus(error));
-        res.end(error.message);
+        const status = getFallbackStatus(error);
+        res.writeHead(status);
+        res.end(getFallbackBody(error, status));
       }
 
       onFinish(res.statusCode);

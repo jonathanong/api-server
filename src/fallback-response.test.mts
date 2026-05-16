@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { sendFallback, getFallbackStatus } from "./fallback-response.mts";
+import { sendFallback, getFallbackBody, getFallbackStatus } from "./fallback-response.mts";
 import type { ServerResponse } from "node:http";
 
 describe("sendFallback", () => {
-  it("sends 404 Not Found", () => {
+  it("sends 500 Internal Server Error", () => {
     const res = makeMockRes();
     sendFallback(res);
-    expect(res.statusCode).toBe(404);
-    expect(res.body).toBe("Not Found");
+    expect(res.statusCode).toBe(500);
+    expect(res.body).toBe("Internal Server Error");
   });
 
   it("does not throw if socket is destroyed", () => {
@@ -22,10 +22,10 @@ describe("sendFallback", () => {
 });
 
 describe("getFallbackStatus", () => {
-  it("returns 404 for non-error", () => {
-    expect(getFallbackStatus(null)).toBe(404);
-    expect(getFallbackStatus(undefined)).toBe(404);
-    expect(getFallbackStatus("string error")).toBe(404);
+  it("returns 500 for non-error", () => {
+    expect(getFallbackStatus(null)).toBe(500);
+    expect(getFallbackStatus(undefined)).toBe(500);
+    expect(getFallbackStatus("string error")).toBe(500);
   });
 
   it("returns error.status when valid HTTP integer", () => {
@@ -34,12 +34,28 @@ describe("getFallbackStatus", () => {
     expect(getFallbackStatus({ status: 500 })).toBe(500);
   });
 
-  it("returns 404 for invalid status values", () => {
-    expect(getFallbackStatus({ status: NaN })).toBe(404);
-    expect(getFallbackStatus({ status: 99 })).toBe(404);
-    expect(getFallbackStatus({ status: 600 })).toBe(404);
-    expect(getFallbackStatus({ status: 1.5 })).toBe(404);
-    expect(getFallbackStatus({ status: "foo" })).toBe(404);
+  it("returns 500 for invalid status values", () => {
+    expect(getFallbackStatus({ status: NaN })).toBe(500);
+    expect(getFallbackStatus({ status: 200 })).toBe(500);
+    expect(getFallbackStatus({ status: 302 })).toBe(500);
+    expect(getFallbackStatus({ status: 99 })).toBe(500);
+    expect(getFallbackStatus({ status: 600 })).toBe(500);
+    expect(getFallbackStatus({ status: 1.5 })).toBe(500);
+    expect(getFallbackStatus({ status: "foo" })).toBe(500);
+  });
+});
+
+describe("getFallbackBody", () => {
+  it("hides 5xx error messages", () => {
+    expect(getFallbackBody(new Error("secret"), 500)).toBe("Internal Server Error");
+  });
+
+  it("returns 4xx messages", () => {
+    expect(getFallbackBody(new Error("Bad Request"), 400)).toBe("Bad Request");
+  });
+
+  it("uses Not Found for empty 4xx messages", () => {
+    expect(getFallbackBody(new Error(""), 404)).toBe("Not Found");
   });
 });
 

@@ -47,10 +47,11 @@ app.route("/").get((ctx) => ctx.json({ ok: true }));
 - **Compression** — `br` / `gzip` / `deflate` negotiation; 1 KB threshold; `SYNC_FLUSH` for streams
 - **Server-Timing** — response latency as a `Server-Timing` header (buffered) or trailer (streaming)
 - **Abort signals** — `ctx.signal` / `ctx.abortController` wired to client disconnect
+- **Request body limits** — `ctx.request.buffer()` and `.json()` use a safe 1 MB default, with per-call overrides
 - **AsyncLocalStorage** — per-request store via `app.setAsyncLocalStorage(als)`
 - **Cookies** — `ctx.cookies.get()` / `.set()` with full `Set-Cookie` options
 - **Cache-Control** — `ctx.cacheControl(visibility, maxAge)` helper
-- **Trusted client IP** — Cloudflare/AWS ALB-aware helper for Node, Deno, and Bun
+- **Trusted client IP** — proxy headers are opt-in via `trustProxy`; standalone helpers support Node, Deno, and Bun
 - **Dev logger** — concurrent-request bar, color-coded status codes, timing thresholds; silent in `NODE_ENV=production` and `NODE_ENV=test`
 - **Error safety net** — error handlers that throw or return without a response still guarantee the client receives a response
 
@@ -86,7 +87,7 @@ See [docs/](docs/README.md) for full API reference:
 
 - No middleware stack. Routes are registered directly on the application; request processing runs top-to-bottom in a single async function per request.
 - No magic. `ctx.req` and `ctx.res` are the raw Node.js `IncomingMessage` and `ServerResponse` objects.
-- Body is pull-based. `ctx.request.buffer()` and `ctx.request.json()` are explicit calls; the body is never automatically parsed.
+- Body is pull-based. `ctx.request.buffer()` and `ctx.request.json()` are explicit calls; the body is never automatically parsed and defaults to a 1 MB limit.
 - Responses are explicit. You choose buffered or streaming; the library doesn't buffer a stream or stream a buffer behind your back.
 
 ## License

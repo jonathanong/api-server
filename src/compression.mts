@@ -7,6 +7,7 @@ import compressibleFn from "compressible";
 
 const SUPPORTED_ENCODINGS = ["br", "gzip", "deflate"];
 const COMPRESSION_THRESHOLD = 1024;
+const MAX_SYNC_COMPRESSION_BYTES = 1024 * 1024;
 
 export function negotiateEncoding(req: IncomingMessage): string | null {
   const negotiator = new Negotiator(req);
@@ -50,6 +51,7 @@ export function shouldCompress(
   bodyLength: number,
 ): string | null {
   if (bodyLength < COMPRESSION_THRESHOLD) return null;
+  if (Number.isFinite(bodyLength) && bodyLength > MAX_SYNC_COMPRESSION_BYTES) return null;
   if (res.getHeader("Content-Encoding")) return null;
   const cacheControl = req.headers["cache-control"];
   if (cacheControl && cacheControl.includes("no-transform")) return null;

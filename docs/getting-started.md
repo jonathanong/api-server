@@ -62,13 +62,22 @@ Optional configuration is passed as an options object:
 
 ```ts
 const app = createApp({
+  bodyLimit: "2mb",
   logger: {
     timingThresholds: { yellow: 100, orange: 500, red: 2000 },
   },
+  trustProxy: true,
 });
 ```
 
-See [logger.md](logger.md) for logger options.
+Options:
+
+- `bodyLimit`: default request body limit for `ctx.request.buffer()` and
+  `ctx.request.json()`. Defaults to `"1mb"`. Set to `false` to disable the
+  default limit.
+- `trustProxy`: when `true`, `ctx.ip` may use `cf-connecting-ip` and
+  `x-forwarded-for`. Defaults to `false`, so `ctx.ip` uses the socket address.
+- `logger`: see [logger.md](logger.md).
 
 ## Security headers
 

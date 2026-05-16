@@ -27,8 +27,8 @@ app.errorHandler(async (ctx, err) => {
 
 If the registered error handler itself throws, or returns without sending a
 response, the framework ensures the client still receives a response rather than
-hanging (issue #1948). The fallback sends `404 Not Found` when no headers have
-been sent yet.
+hanging (issue #1948). The fallback sends `500 Internal Server Error` when no
+headers have been sent yet.
 
 ## app.on('error', fn)
 
@@ -94,5 +94,7 @@ app.route("/users/:id").get((ctx) => {
 Without a custom `errorHandler`, the framework:
 
 1. Emits the error on `app` if any `'error'` listeners are registered.
-2. Sends a response using the error's `.status` property (or `404` as fallback)
-   and the error's `.message` as the body.
+2. Sends a response using the error's `.status` property when it is a valid
+   4xx or 5xx HTTP status, or `500` otherwise.
+3. Sends the error message for 4xx responses and `Internal Server Error` for
+   5xx responses.

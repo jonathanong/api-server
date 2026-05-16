@@ -2,7 +2,7 @@
  * Tests for the framework safety-net introduced to fix issue #1948.
  *
  * When a registered error handler throws or returns without sending a response,
- * the framework must still guarantee the client receives a response (404) rather
+ * the framework must still guarantee the client receives a response (500) rather
  * than leaving the socket hanging until timeout.
  */
 import { describe, it, expect } from "vitest";
@@ -58,7 +58,7 @@ function makeMockReqRes(url: string): [import("node:http").IncomingMessage, Mock
 }
 
 describe("Application error fallback (#1948)", () => {
-  it("error handler that throws still sends a 404 fallback", async () => {
+  it("error handler that throws still sends a 500 fallback", async () => {
     const app = new Application();
     const errors: Error[] = [];
     app.on("error", (err: Error) => errors.push(err));
@@ -79,12 +79,12 @@ describe("Application error fallback (#1948)", () => {
       app.callback()(mockReq, mockRes as unknown as import("node:http").ServerResponse);
     });
 
-    expect(mockRes.statusCode).toBe(404);
-    expect(mockRes.chunks.join("")).toBe("Not Found");
+    expect(mockRes.statusCode).toBe(500);
+    expect(mockRes.chunks.join("")).toBe("Internal Server Error");
     expect(errors.some((e) => e.message === "handler exploded")).toBe(true);
   });
 
-  it("error handler that returns without sending a response sends a 404 fallback", async () => {
+  it("error handler that returns without sending a response sends a 500 fallback", async () => {
     const app = new Application();
     app.errorHandler(() => {
       // returns without calling ctx.json or ctx.setStatus
@@ -103,11 +103,11 @@ describe("Application error fallback (#1948)", () => {
       app.callback()(mockReq, mockRes as unknown as import("node:http").ServerResponse);
     });
 
-    expect(mockRes.statusCode).toBe(404);
-    expect(mockRes.chunks.join("")).toBe("Not Found");
+    expect(mockRes.statusCode).toBe(500);
+    expect(mockRes.chunks.join("")).toBe("Internal Server Error");
   });
 
-  it("async error handler that rejects sends a 404 fallback", async () => {
+  it("async error handler that rejects sends a 500 fallback", async () => {
     const app = new Application();
     app.errorHandler(async () => {
       await Promise.resolve();
@@ -127,11 +127,11 @@ describe("Application error fallback (#1948)", () => {
       app.callback()(mockReq, mockRes as unknown as import("node:http").ServerResponse);
     });
 
-    expect(mockRes.statusCode).toBe(404);
-    expect(mockRes.chunks.join("")).toBe("Not Found");
+    expect(mockRes.statusCode).toBe(500);
+    expect(mockRes.chunks.join("")).toBe("Internal Server Error");
   });
 
-  it("falls back to 404 when no error handler is registered and error has no status", async () => {
+  it("falls back to 500 when no error handler is registered and error has no status", async () => {
     const app = new Application();
     app.route("/plain-error").get(() => {
       throw new Error("boom");
@@ -139,11 +139,12 @@ describe("Application error fallback (#1948)", () => {
 
     await withServer(app.callback(), async (server) => {
       const res = await request(server).get("/plain-error");
-      expect(res.status).toBe(404);
+      expect(res.status).toBe(500);
+      expect(res.text).toBe("Internal Server Error");
     });
   });
 
-  it("falls back to 404 when no error handler is registered and error.status is NaN", async () => {
+  it("falls back to 500 when no error handler is registered and error.status is NaN", async () => {
     const app = new Application();
     app.route("/nan-status").get(() => {
       const err = Object.assign(new Error("bad status"), { status: NaN });
@@ -152,7 +153,8 @@ describe("Application error fallback (#1948)", () => {
 
     await withServer(app.callback(), async (server) => {
       const res = await request(server).get("/nan-status");
-      expect(res.status).toBe(404);
+      expect(res.status).toBe(500);
+      expect(res.text).toBe("Internal Server Error");
     });
   });
 
@@ -165,6 +167,7 @@ describe("Application error fallback (#1948)", () => {
     await withServer(app.callback(), async (server) => {
       const res = await request(server).get("/auth-error");
       expect(res.status).toBe(401);
+      expect(res.text).toBe("Unauthorized");
     });
   });
 });
