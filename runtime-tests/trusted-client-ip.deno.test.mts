@@ -1,12 +1,5 @@
+import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { resolveTrustedClientIp } from "../src/trusted-client-ip.mts";
-
-function assertEquals(actual: unknown, expected: unknown): void {
-  const actualJson = JSON.stringify(actual);
-  const expectedJson = JSON.stringify(expected);
-  if (actualJson !== expectedJson) {
-    throw new Error(`Expected ${expectedJson}, got ${actualJson}`);
-  }
-}
 
 Deno.test("resolves IP from Deno.serve Request and ServeHandlerInfo", async () => {
   const server = Deno.serve(

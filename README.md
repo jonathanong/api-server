@@ -56,7 +56,7 @@ app.route("/").get((ctx) => ctx.json({ ok: true }));
 
 ## Requirements
 
-- Node.js ≥ 22.0.0
+- Node.js ≥ 24.0.0
 - ESM (`"type": "module"` or `.mjs` imports)
 
 ## Documentation
