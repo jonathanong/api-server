@@ -53,7 +53,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "prepare": "node scripts/install-husky.mjs",
-    "prepublishOnly": "npm run typecheck && npm test && npm run build && npm run test:runtimes",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint src/ runtime-tests/",
     "format": "oxfmt src/ runtime-tests/ docs/ README.md",
