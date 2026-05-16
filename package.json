@@ -1,6 +1,6 @@
 {
   "name": "@jongleberry/api-server",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A Node.js HTTP server library",
   "license": "MIT",
   "author": "Jonathan Ong",
