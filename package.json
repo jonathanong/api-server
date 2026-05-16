@@ -76,10 +76,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jongleberry/api-server.git"
+    "url": "git+https://github.com/jonathanong/api-server.git"
   },
   "bugs": {
-    "url": "https://github.com/jongleberry/api-server/issues"
+    "url": "https://github.com/jonathanong/api-server/issues"
   },
-  "homepage": "https://github.com/jongleberry/api-server"
+  "homepage": "https://github.com/jonathanong/api-server"
 }
