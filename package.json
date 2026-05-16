@@ -14,6 +14,10 @@
     ".": {
       "types": "./dist/index.d.mts",
       "import": "./dist/index.mjs"
+    },
+    "./trusted-client-ip": {
+      "types": "./dist/trusted-client-ip.d.mts",
+      "import": "./dist/trusted-client-ip.mjs"
     }
   },
   "engines": {
@@ -49,13 +53,16 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "prepare": "node scripts/install-husky.mjs",
-    "prepublishOnly": "npm run typecheck && npm test && npm run build",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build && npm run test:runtimes",
     "typecheck": "tsc --noEmit",
-    "lint": "oxlint src/",
-    "format": "oxfmt src/ docs/ README.md",
-    "format:check": "oxfmt --check src/ docs/ README.md",
+    "lint": "oxlint src/ runtime-tests/",
+    "format": "oxfmt src/ runtime-tests/ docs/ README.md",
+    "format:check": "oxfmt --check src/ runtime-tests/ docs/ README.md",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage && node scripts/strip-lcov-branches.mjs",
+    "test:deno": "deno test --allow-net=127.0.0.1,localhost runtime-tests/trusted-client-ip.deno.test.mts",
+    "test:bun": "bun test runtime-tests/trusted-client-ip.bun.test.mts",
+    "test:runtimes": "npm run test:deno && npm run test:bun",
     "test:watch": "vitest"
   },
   "keywords": [
