@@ -6,8 +6,8 @@ both the raw Node.js objects and higher-level helpers.
 ## Raw request / response
 
 ```ts
-ctx.req   // node:http IncomingMessage
-ctx.res   // node:http ServerResponse
+ctx.req; // node:http IncomingMessage
+ctx.res; // node:http ServerResponse
 ```
 
 Use these for low-level access not covered by the helpers below.
@@ -28,16 +28,16 @@ multiple values becomes an array; a key with a single value stays a string.
 ```ts
 app.route("/search").get((ctx) => {
   // GET /search?q=hello&tag=a&tag=b
-  ctx.query.q;    // "hello"
-  ctx.query.tag;  // ["a", "b"]
+  ctx.query.q; // "hello"
+  ctx.query.tag; // ["a", "b"]
 });
 ```
 
 ## Abort signal
 
 ```ts
-ctx.signal          // AbortSignal — aborted on client disconnect
-ctx.abortController // AbortController driving ctx.signal
+ctx.signal; // AbortSignal — aborted on client disconnect
+ctx.abortController; // AbortController driving ctx.signal
 ```
 
 Pass `ctx.signal` to `fetch`, database queries, or any async work that should
@@ -46,7 +46,7 @@ stop when the client disconnects. See [abort-signals.md](abort-signals.md).
 ## Trusted client IP
 
 ```ts
-ctx.ip // string | undefined
+ctx.ip; // string | undefined
 ```
 
 Resolves `cf-connecting-ip` → `x-forwarded-for[0]` → `socket.remoteAddress`.
@@ -55,7 +55,7 @@ See [trusted-client-ip.md](trusted-client-ip.md).
 ## AsyncLocalStorage store
 
 ```ts
-ctx.store // unknown — the value from AsyncLocalStorage.getStore()
+ctx.store; // unknown — the value from AsyncLocalStorage.getStore()
 ```
 
 Available after calling `app.setAsyncLocalStorage(als)`.
@@ -102,12 +102,12 @@ ctx.setType("application/vnd.api+json"); // or a full MIME type
 ## Sending responses
 
 ```ts
-ctx.json({ ok: true });                         // application/json
-ctx.response.text("hello");                     // text/plain
-ctx.response.html("<h1>Hi</h1>");               // text/html
-ctx.response.xml("<root/>");                    // application/xml
-ctx.response.buffer(buf, "image/png");          // arbitrary content-type
-ctx.pipeline(readable, ...transforms);          // streaming
+ctx.json({ ok: true }); // application/json
+ctx.response.text("hello"); // text/plain
+ctx.response.html("<h1>Hi</h1>"); // text/html
+ctx.response.xml("<root/>"); // application/xml
+ctx.response.buffer(buf, "image/png"); // arbitrary content-type
+ctx.pipeline(readable, ...transforms); // streaming
 ```
 
 See [response.md](response.md) for details.
@@ -115,9 +115,9 @@ See [response.md](response.md) for details.
 ## Cache-Control
 
 ```ts
-ctx.cacheControl("public", 3600);      // public, max-age=3600
-ctx.cacheControl("public", "1 hour");  // same, human-readable
-ctx.cacheControl("private");           // private, no-cache, no-store, must-revalidate
+ctx.cacheControl("public", 3600); // public, max-age=3600
+ctx.cacheControl("public", "1 hour"); // same, human-readable
+ctx.cacheControl("private"); // private, no-cache, no-store, must-revalidate
 ```
 
 See [etag-and-caching.md](etag-and-caching.md).
@@ -125,7 +125,7 @@ See [etag-and-caching.md](etag-and-caching.md).
 ## Cookies
 
 ```ts
-ctx.cookies.get("session");            // read from Cookie header
+ctx.cookies.get("session"); // read from Cookie header
 ctx.cookies.set("session", token, { httpOnly: true, secure: true });
 ```
 

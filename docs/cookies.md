@@ -43,15 +43,15 @@ app.route("/login").post(async (ctx) => {
 
 All fields are optional.
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `httpOnly` | `boolean` | Prevent JavaScript access |
-| `secure` | `boolean` | HTTPS only |
-| `sameSite` | `"strict" \| "lax" \| "none" \| true` | SameSite policy |
-| `path` | `string` | Cookie path (default: `/` via the `cookie` package) |
-| `domain` | `string` | Cookie domain |
-| `expires` | `Date` | Absolute expiry date |
-| `maxAge` | `number` | Max age in seconds |
+| Option     | Type                                  | Description                                         |
+| ---------- | ------------------------------------- | --------------------------------------------------- |
+| `httpOnly` | `boolean`                             | Prevent JavaScript access                           |
+| `secure`   | `boolean`                             | HTTPS only                                          |
+| `sameSite` | `"strict" \| "lax" \| "none" \| true` | SameSite policy                                     |
+| `path`     | `string`                              | Cookie path (default: `/` via the `cookie` package) |
+| `domain`   | `string`                              | Cookie domain                                       |
+| `expires`  | `Date`                                | Absolute expiry date                                |
+| `maxAge`   | `number`                              | Max age in seconds                                  |
 
 ## Caveat: get() does not see same-request set() calls
 

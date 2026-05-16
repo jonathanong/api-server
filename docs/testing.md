@@ -97,7 +97,9 @@ it("emits error on double-send", async () => {
     statusCode: 200,
     setHeader: () => {},
     getHeader: () => undefined,
-    writeHead: (s: number) => { mockRes.statusCode = s; },
+    writeHead: (s: number) => {
+      mockRes.statusCode = s;
+    },
     end: () => {},
   } as unknown as import("node:http").ServerResponse;
 
@@ -110,9 +112,9 @@ it("emits error on double-send", async () => {
 
 ## When to use supertest vs mock objects
 
-| Scenario | Approach |
-|----------|----------|
-| Verify real HTTP semantics (status, headers, body) | `request(server)` via `withServer` |
-| Multiple requests in one test | `withServer` |
-| Synchronous rejection / error event wiring | Mock req/res |
-| Handler-side state assertions | Return values in JSON body, assert via `res.body` |
+| Scenario                                           | Approach                                          |
+| -------------------------------------------------- | ------------------------------------------------- |
+| Verify real HTTP semantics (status, headers, body) | `request(server)` via `withServer`                |
+| Multiple requests in one test                      | `withServer`                                      |
+| Synchronous rejection / error event wiring         | Mock req/res                                      |
+| Handler-side state assertions                      | Return values in JSON body, assert via `res.body` |
