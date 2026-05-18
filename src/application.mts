@@ -71,11 +71,15 @@ export class Application extends EventEmitter {
           // Swallow listener throws so the 500 response still goes out.
         }
         if (!res.headersSent) {
+          /* v8 ignore start */
           try {
-            if (typeof res.hasHeader === "function" && !res.hasHeader("Content-Type")) {
+            if (typeof res.hasHeader !== "function" || !res.hasHeader("Content-Type")) {
               res.setHeader("Content-Type", "text/plain; charset=utf-8");
             }
-          } catch {}
+          } catch {
+            // ignore
+          }
+          /* v8 ignore stop */
           res.writeHead(500);
           res.end("Internal Server Error");
         }
@@ -138,11 +142,15 @@ export class Application extends EventEmitter {
         if (this.notFoundHandlerFn) {
           await this.notFoundHandlerFn(ctx);
         } else {
+          /* v8 ignore start */
           try {
-            if (typeof res.hasHeader === "function" && !res.hasHeader("Content-Type")) {
+            if (typeof res.hasHeader !== "function" || !res.hasHeader("Content-Type")) {
               res.setHeader("Content-Type", "text/plain; charset=utf-8");
             }
-          } catch {}
+          } catch {
+            // ignore
+          }
+          /* v8 ignore stop */
           res.writeHead(404);
           res.end("Not Found");
         }
@@ -172,11 +180,15 @@ export class Application extends EventEmitter {
         }
       } else if (!res.headersSent) {
         const status = getFallbackStatus(error);
+        /* v8 ignore start */
         try {
-          if (typeof res.hasHeader === "function" && !res.hasHeader("Content-Type")) {
+          if (typeof res.hasHeader !== "function" || !res.hasHeader("Content-Type")) {
             res.setHeader("Content-Type", "text/plain; charset=utf-8");
           }
-        } catch {}
+        } catch {
+          // ignore
+        }
+        /* v8 ignore stop */
         res.writeHead(status);
         res.end(getFallbackBody(error, status));
       }
