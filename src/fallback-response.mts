@@ -6,6 +6,11 @@ const ERROR_BODY = "Internal Server Error";
 
 export function sendFallback(res: ServerResponse): void {
   try {
+    try {
+      if (typeof res.hasHeader === "function" && !res.hasHeader("Content-Type")) {
+        res.setHeader("Content-Type", "text/plain; charset=utf-8");
+      }
+    } catch {}
     res.writeHead(ERROR_STATUS);
     res.end(ERROR_BODY);
   } catch {
