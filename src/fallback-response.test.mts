@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { sendFallback, getFallbackBody, getFallbackStatus } from "./fallback-response.mts";
+import {
+  ensureFallbackHeaders,
+  sendFallback,
+  getFallbackBody,
+  getFallbackStatus,
+} from "./fallback-response.mts";
 import type { ServerResponse } from "node:http";
 
 describe("sendFallback", () => {
@@ -8,6 +13,8 @@ describe("sendFallback", () => {
     sendFallback(res);
     expect(res.statusCode).toBe(500);
     expect(res.body).toBe("Internal Server Error");
+    expect(res.getHeader("Content-Type")).toBe("text/plain; charset=utf-8");
+    expect(res.getHeader("X-Content-Type-Options")).toBe("nosniff");
   });
 
   it("does not throw if socket is destroyed", () => {
@@ -18,6 +25,26 @@ describe("sendFallback", () => {
       end: () => {},
     } as unknown as ServerResponse;
     expect(() => sendFallback(res)).not.toThrow();
+  });
+});
+
+describe("ensureFallbackHeaders", () => {
+  it("sets text and security headers when missing", () => {
+    const res = makeMockRes();
+    ensureFallbackHeaders(res);
+    expect(res.getHeader("Content-Type")).toBe("text/plain; charset=utf-8");
+    expect(res.getHeader("X-XSS-Protection")).toBe("0");
+    expect(res.getHeader("X-Frame-Options")).toBe("SAMEORIGIN");
+    expect(res.getHeader("X-Content-Type-Options")).toBe("nosniff");
+  });
+
+  it("does not overwrite existing headers", () => {
+    const res = makeMockRes();
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("X-Frame-Options", "DENY");
+    ensureFallbackHeaders(res);
+    expect(res.getHeader("Content-Type")).toBe("application/json");
+    expect(res.getHeader("X-Frame-Options")).toBe("DENY");
   });
 });
 
@@ -60,9 +87,19 @@ describe("getFallbackBody", () => {
 });
 
 function makeMockRes(): ServerResponse & { body: string } {
+  const headers = new Map<string, string | number | string[]>();
   const mock = {
     statusCode: 200,
     body: "",
+    setHeader(name: string, value: string | number | readonly string[]) {
+      headers.set(name.toLowerCase(), value as string | number | string[]);
+    },
+    getHeader(name: string) {
+      return headers.get(name.toLowerCase());
+    },
+    hasHeader(name: string) {
+      return headers.has(name.toLowerCase());
+    },
     writeHead(status: number) {
       this.statusCode = status;
     },

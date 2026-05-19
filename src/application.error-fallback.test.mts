@@ -141,6 +141,8 @@ describe("Application error fallback (#1948)", () => {
       const res = await request(server).get("/plain-error");
       expect(res.status).toBe(500);
       expect(res.text).toBe("Internal Server Error");
+      expect(res.headers["content-type"]).toBe("text/plain; charset=utf-8");
+      expect(res.headers["x-content-type-options"]).toBe("nosniff");
     });
   });
 
@@ -168,6 +170,21 @@ describe("Application error fallback (#1948)", () => {
       const res = await request(server).get("/auth-error");
       expect(res.status).toBe(401);
       expect(res.text).toBe("Unauthorized");
+    });
+  });
+
+  it("does not overwrite existing Content-Type on fallback errors", async () => {
+    const app = new Application();
+    app.route("/custom-type-error").get((ctx) => {
+      ctx.res.setHeader("Content-Type", "text/custom");
+      throw createHttpError(400, "Bad Request");
+    });
+
+    await withServer(app.callback(), async (server) => {
+      const res = await request(server).get("/custom-type-error");
+      expect(res.status).toBe(400);
+      expect(res.text).toBe("Bad Request");
+      expect(res.headers["content-type"]).toBe("text/custom");
     });
   });
 });

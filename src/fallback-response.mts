@@ -3,9 +3,29 @@ import type { ServerResponse } from "node:http";
 const FALLBACK_BODY = "Not Found";
 const ERROR_STATUS = 500;
 const ERROR_BODY = "Internal Server Error";
+const TEXT_PLAIN_CONTENT_TYPE = "text/plain; charset=utf-8";
+const FALLBACK_HEADERS = {
+  "Content-Type": TEXT_PLAIN_CONTENT_TYPE,
+  "X-XSS-Protection": "0",
+  "X-Frame-Options": "SAMEORIGIN",
+  "X-Content-Type-Options": "nosniff",
+} as const;
+
+export function ensureFallbackHeaders(res: ServerResponse): void {
+  for (const [name, value] of Object.entries(FALLBACK_HEADERS)) {
+    try {
+      if (typeof res.hasHeader !== "function" || !res.hasHeader(name)) {
+        res.setHeader(name, value);
+      }
+    } catch {
+      // Header mutation can fail on destroyed sockets or non-standard responses.
+    }
+  }
+}
 
 export function sendFallback(res: ServerResponse): void {
   try {
+    ensureFallbackHeaders(res);
     res.writeHead(ERROR_STATUS);
     res.end(ERROR_BODY);
   } catch {
