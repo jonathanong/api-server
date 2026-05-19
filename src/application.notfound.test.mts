@@ -11,6 +11,8 @@ describe("Application not-found handling", () => {
       const res = await request(server).get("/does-not-exist");
       expect(res.status).toBe(404);
       expect(res.text).toBe("Not Found");
+      expect(res.headers["content-type"]).toBe("text/plain; charset=utf-8");
+      expect(res.headers["x-content-type-options"]).toBe("nosniff");
     });
   });
 

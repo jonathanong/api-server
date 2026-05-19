@@ -7,7 +7,12 @@ import Router from "find-my-way";
 import { ServerTiming } from "./server-timing.mts";
 import { Logger } from "./logger.mts";
 import type { ApplicationOptions } from "./types.mts";
-import { getFallbackBody, getFallbackStatus, sendFallback } from "./fallback-response.mts";
+import {
+  ensureFallbackHeaders,
+  getFallbackBody,
+  getFallbackStatus,
+  sendFallback,
+} from "./fallback-response.mts";
 export type ErrorHandler = (ctx: Context, error: Error) => Promise<void> | void;
 export type NotFoundHandler = (ctx: Context) => Promise<void> | void;
 
@@ -71,15 +76,7 @@ export class Application extends EventEmitter {
           // Swallow listener throws so the 500 response still goes out.
         }
         if (!res.headersSent) {
-          /* v8 ignore start */
-          try {
-            if (typeof res.hasHeader !== "function" || !res.hasHeader("Content-Type")) {
-              res.setHeader("Content-Type", "text/plain; charset=utf-8");
-            }
-          } catch {
-            // ignore
-          }
-          /* v8 ignore stop */
+          ensureFallbackHeaders(res);
           res.writeHead(500);
           res.end("Internal Server Error");
         }
@@ -142,15 +139,7 @@ export class Application extends EventEmitter {
         if (this.notFoundHandlerFn) {
           await this.notFoundHandlerFn(ctx);
         } else {
-          /* v8 ignore start */
-          try {
-            if (typeof res.hasHeader !== "function" || !res.hasHeader("Content-Type")) {
-              res.setHeader("Content-Type", "text/plain; charset=utf-8");
-            }
-          } catch {
-            // ignore
-          }
-          /* v8 ignore stop */
+          ensureFallbackHeaders(res);
           res.writeHead(404);
           res.end("Not Found");
         }
@@ -180,15 +169,7 @@ export class Application extends EventEmitter {
         }
       } else if (!res.headersSent) {
         const status = getFallbackStatus(error);
-        /* v8 ignore start */
-        try {
-          if (typeof res.hasHeader !== "function" || !res.hasHeader("Content-Type")) {
-            res.setHeader("Content-Type", "text/plain; charset=utf-8");
-          }
-        } catch {
-          // ignore
-        }
-        /* v8 ignore stop */
+        ensureFallbackHeaders(res);
         res.writeHead(status);
         res.end(getFallbackBody(error, status));
       }
