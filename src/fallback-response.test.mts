@@ -81,6 +81,12 @@ describe("getFallbackBody", () => {
     expect(getFallbackBody(new Error("Bad Request"), 400)).toBe("Bad Request");
   });
 
+  it("escapes HTML characters in 4xx messages to prevent XSS", () => {
+    const malicious = '<script>alert("xss")</script> & it\'s dangerous';
+    const escaped = "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; &amp; it&#39;s dangerous";
+    expect(getFallbackBody(new Error(malicious), 400)).toBe(escaped);
+  });
+
   it("uses Not Found for empty 4xx messages", () => {
     expect(getFallbackBody(new Error(""), 404)).toBe("Not Found");
   });

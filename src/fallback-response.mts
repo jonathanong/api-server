@@ -41,8 +41,17 @@ export function getFallbackStatus(error: unknown): number {
   return ERROR_STATUS;
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export function getFallbackBody(error: unknown, status: number): string {
   if (status >= 500) return ERROR_BODY;
   const message = (error as { message?: unknown } | null)?.message;
-  return typeof message === "string" && message ? message : FALLBACK_BODY;
+  return typeof message === "string" && message ? escapeHtml(message) : FALLBACK_BODY;
 }
