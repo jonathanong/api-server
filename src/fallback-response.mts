@@ -1,4 +1,4 @@
-import type { ServerResponse } from "node:http";
+import { type ServerResponse, STATUS_CODES } from "node:http";
 
 const FALLBACK_BODY = "Not Found";
 const ERROR_STATUS = 500;
@@ -43,6 +43,10 @@ export function getFallbackStatus(error: unknown): number {
 
 export function getFallbackBody(error: unknown, status: number): string {
   if (status >= 500) return ERROR_BODY;
-  const message = (error as { message?: unknown } | null)?.message;
-  return typeof message === "string" && message ? message : FALLBACK_BODY;
+  const err = error as { message?: unknown; expose?: unknown } | null;
+  const message = err?.message;
+  if (err?.expose === false) {
+    return STATUS_CODES[status] || FALLBACK_BODY;
+  }
+  return typeof message === "string" && message ? message : STATUS_CODES[status] || FALLBACK_BODY;
 }
