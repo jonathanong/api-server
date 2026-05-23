@@ -77,12 +77,24 @@ describe("getFallbackBody", () => {
     expect(getFallbackBody(new Error("secret"), 500)).toBe("Internal Server Error");
   });
 
-  it("returns 4xx messages", () => {
-    expect(getFallbackBody(new Error("Bad Request"), 400)).toBe("Bad Request");
+  it("hides 4xx messages when expose is false", () => {
+    expect(getFallbackBody(Object.assign(new Error("secret"), { expose: false }), 400)).toBe(
+      "Bad Request",
+    );
   });
 
-  it("uses Not Found for empty 4xx messages", () => {
-    expect(getFallbackBody(new Error(""), 404)).toBe("Not Found");
+  it("hides 4xx messages when expose is undefined", () => {
+    expect(getFallbackBody(new Error("secret"), 400)).toBe("Bad Request");
+  });
+
+  it("returns 4xx messages when expose is true", () => {
+    expect(
+      getFallbackBody(Object.assign(new Error("Bad Request Data"), { expose: true }), 400),
+    ).toBe("Bad Request Data");
+  });
+
+  it("uses Not Found for empty 4xx messages when expose is true", () => {
+    expect(getFallbackBody(Object.assign(new Error(""), { expose: true }), 404)).toBe("Not Found");
   });
 });
 

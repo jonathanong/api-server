@@ -45,7 +45,7 @@ export function getFallbackBody(error: unknown, status: number): string {
   if (status >= 500) return ERROR_BODY;
   const err = error as { message?: unknown; expose?: unknown } | null;
   const message = err?.message;
-  if (err?.expose === false) {
+  if (err?.expose !== true) {
     return STATUS_CODES[status] || FALLBACK_BODY;
   }
   return typeof message === "string" && message ? message : STATUS_CODES[status] || FALLBACK_BODY;
