@@ -187,6 +187,19 @@ describe("Application error fallback (#1948)", () => {
       expect(res.headers["content-type"]).toBe("text/custom");
     });
   });
+
+  it("does not leak error messages when expose is false", async () => {
+    const app = new Application();
+    app.route("/secret-error").get(() => {
+      throw createHttpError(400, "Secret Database Error", { expose: false });
+    });
+
+    await withServer(app.callback(), async (server) => {
+      const res = await request(server).get("/secret-error");
+      expect(res.status).toBe(400);
+      expect(res.text).toBe("Bad Request");
+    });
+  });
 });
 
 describe("Application outer safety-net (handleRequest catch)", () => {
