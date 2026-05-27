@@ -84,6 +84,12 @@ describe("getFallbackBody", () => {
   it("uses Not Found for empty 4xx messages", () => {
     expect(getFallbackBody(new Error(""), 404)).toBe("Not Found");
   });
+
+  it("escapes HTML in 4xx messages", () => {
+    expect(getFallbackBody(new Error("<script>alert('XSS')</script>"), 400)).toBe(
+      "&lt;script&gt;alert(&#039;XSS&#039;)&lt;/script&gt;",
+    );
+  });
 });
 
 function makeMockRes(): ServerResponse & { body: string } {
