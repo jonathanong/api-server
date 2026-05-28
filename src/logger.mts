@@ -44,8 +44,8 @@ export class Logger {
     }
 
     const slot = this.assignSlot();
-    const method = req.method ?? "GET";
-    const url = req.url ?? "/";
+    const method = sanitize(req.method ?? "GET");
+    const url = sanitize(req.url ?? "/");
     const startTime = process.hrtime.bigint();
 
     this.print("──‣", "┈┈┈┈┈", method, url, "┬", slot);
@@ -71,8 +71,8 @@ export class Logger {
   }
 
   private createErrorLevelLogger(req: IncomingMessage): RequestLogger {
-    const method = req.method ?? "GET";
-    const url = req.url ?? "/";
+    const method = sanitize(req.method ?? "GET");
+    const url = sanitize(req.url ?? "/");
     const startTime = process.hrtime.bigint();
     return {
       onWriteHead: noop,
@@ -146,3 +146,8 @@ export class Logger {
 }
 
 function noop(): void {}
+
+function sanitize(str: string): string {
+  // eslint-disable-next-line no-control-regex
+  return str.replace(/[\x00-\x1F\x7F-\x9F]/g, "");
+}

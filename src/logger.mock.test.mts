@@ -332,5 +332,14 @@ describe("Logger", () => {
       expect(output).toContain("GET");
       expect(output).toContain("/");
     });
+
+    it("sanitizes malicious characters in url and method", () => {
+      const logger = new Logger();
+      const req = makeReq("GET\n", "/foo\r\nBar\x1b[31m");
+      const { onFinish } = logger.onRequestStart(req);
+      onFinish(500);
+      const output = (writeSpy.mock.calls as unknown[][]).map((c) => String(c[0])).join("");
+      expect(output).toContain("GET /fooBar[31m");
+    });
   });
 });
