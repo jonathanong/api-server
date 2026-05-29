@@ -188,6 +188,21 @@ describe("Application error fallback (#1948)", () => {
     });
   });
 
+  it("escapes 4xx fallback bodies when Content-Type is text/html", async () => {
+    const app = new Application();
+    app.route("/html-error").get((ctx) => {
+      ctx.res.setHeader("Content-Type", "text/html");
+      throw createHttpError(400, "<script>alert('XSS')</script>");
+    });
+
+    await withServer(app.callback(), async (server) => {
+      const res = await request(server).get("/html-error");
+      expect(res.status).toBe(400);
+      expect(res.text).toBe("&lt;script&gt;alert('XSS')&lt;/script&gt;");
+      expect(res.headers["content-type"]).toBe("text/html");
+    });
+  });
+
   it("does not leak error messages when expose is false", async () => {
     const app = new Application();
     app.route("/secret-error").get(() => {

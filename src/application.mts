@@ -171,7 +171,7 @@ export class Application extends EventEmitter {
         const status = getFallbackStatus(error);
         ensureFallbackHeaders(res);
         res.writeHead(status);
-        res.end(getFallbackBody(error, status));
+        res.end(getFallbackBody(error, status, res.getHeader("Content-Type")));
       }
 
       onFinish(res.statusCode);

@@ -85,9 +85,15 @@ describe("getFallbackBody", () => {
     expect(getFallbackBody(new Error(""), 404)).toBe("Not Found");
   });
 
-  it("escapes HTML in 4xx messages", () => {
+  it("escapes HTML in 4xx messages for HTML content types", () => {
+    expect(getFallbackBody(new Error("<script>alert('XSS')</script>"), 400, "text/html")).toBe(
+      "&lt;script&gt;alert('XSS')&lt;/script&gt;",
+    );
+  });
+
+  it("does not escape HTML in 4xx messages for plain text content types", () => {
     expect(getFallbackBody(new Error("<script>alert('XSS')</script>"), 400)).toBe(
-      "&lt;script&gt;alert(&#039;XSS&#039;)&lt;/script&gt;",
+      "<script>alert('XSS')</script>",
     );
   });
 });
