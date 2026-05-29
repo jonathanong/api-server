@@ -333,13 +333,26 @@ describe("Logger", () => {
       expect(output).toContain("/");
     });
 
-    it("sanitizes malicious characters in url and method", () => {
-      const logger = new Logger();
-      const req = makeReq("GET\n", "/foo\r\nBar\x1b[31m");
-      const { onFinish } = logger.onRequestStart(req);
-      onFinish(500);
-      const output = (writeSpy.mock.calls as unknown[][]).map((c) => String(c[0])).join("");
-      expect(output).toContain("GET /fooBar[31m");
+    it("sanitizes malicious characters in url and method for all log levels", () => {
+      const inputMethod = "GET\n";
+      const inputUrl = "/foo\r\nBar\x1b[31m\u202E";
+      const req = makeReq(inputMethod, inputUrl);
+      const cases = ["info", "error"] as const;
+
+      for (const level of cases) {
+        process.env.LOG_LEVEL = level;
+        const logger = new Logger();
+        writeSpy.mockClear();
+
+        const { onFinish } = logger.onRequestStart(req);
+        onFinish(500);
+
+        const output = (writeSpy.mock.calls as unknown[][]).map((c) => String(c[0])).join("");
+        expect(output).toContain("/fooBar");
+        expect(output).not.toContain("/foo\r");
+        expect(output).not.toContain("Bar\x1b[31m");
+        expect(output).not.toContain("\u202E");
+      }
     });
   });
 });
