@@ -41,6 +41,15 @@ export function getFallbackStatus(error: unknown): number {
   return ERROR_STATUS;
 }
 
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 export function getFallbackBody(error: unknown, status: number): string {
   if (status >= 500) return ERROR_BODY;
   const err = error as { message?: unknown; expose?: unknown } | null;
@@ -48,5 +57,7 @@ export function getFallbackBody(error: unknown, status: number): string {
   if (err?.expose === false) {
     return STATUS_CODES[status] || FALLBACK_BODY;
   }
-  return typeof message === "string" && message ? message : STATUS_CODES[status] || FALLBACK_BODY;
+  const msg =
+    typeof message === "string" && message ? message : STATUS_CODES[status] || FALLBACK_BODY;
+  return escapeHtml(msg);
 }
