@@ -36,6 +36,8 @@ describe("ensureFallbackHeaders", () => {
     expect(res.getHeader("X-XSS-Protection")).toBe("0");
     expect(res.getHeader("X-Frame-Options")).toBe("SAMEORIGIN");
     expect(res.getHeader("X-Content-Type-Options")).toBe("nosniff");
+    expect(res.getHeader("Strict-Transport-Security")).toBeDefined();
+    expect(res.getHeader("Referrer-Policy")).toBeDefined();
   });
 
   it("does not overwrite existing headers", () => {

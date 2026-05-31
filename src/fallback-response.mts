@@ -9,6 +9,8 @@ const FALLBACK_HEADERS = {
   "X-XSS-Protection": "0",
   "X-Frame-Options": "SAMEORIGIN",
   "X-Content-Type-Options": "nosniff",
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+  "Referrer-Policy": "no-referrer",
 } as const;
 
 export function ensureFallbackHeaders(res: ServerResponse): void {

@@ -275,6 +275,8 @@ describe("Application", () => {
       expect(res.headers["x-xss-protection"]).toBeDefined();
       expect(res.headers["x-frame-options"]).toBeDefined();
       expect(res.headers["x-content-type-options"]).toBe("nosniff");
+      expect(res.headers["strict-transport-security"]).toBeDefined();
+      expect(res.headers["referrer-policy"]).toBeDefined();
     });
   });
 
