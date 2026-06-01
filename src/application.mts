@@ -122,10 +122,15 @@ export class Application extends EventEmitter {
     try {
       const method = req.method ?? "GET";
       const url = req.url ?? "/";
-      const rawPath =
-        url.startsWith("http://") || url.startsWith("https://")
-          ? new URL(url).pathname
-          : url.split("?")[0];
+      let rawPath: string;
+      try {
+        rawPath =
+          url.startsWith("http://") || url.startsWith("https://")
+            ? new URL(url).pathname
+            : url.split("?")[0];
+      } catch {
+        throw Object.assign(new Error("Invalid URL"), { status: 400 });
+      }
       const routePath = rawPath.replace(/^\/+/, "/") || "/";
 
       const found = this.router.find(method as Router.HTTPMethod, routePath);
