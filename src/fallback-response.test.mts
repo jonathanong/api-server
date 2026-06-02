@@ -15,6 +15,7 @@ describe("sendFallback", () => {
     expect(res.body).toBe("Internal Server Error");
     expect(res.getHeader("Content-Type")).toBe("text/plain; charset=utf-8");
     expect(res.getHeader("X-Content-Type-Options")).toBe("nosniff");
+    expect(res.getHeader("Strict-Transport-Security")).toBe("max-age=15552000; includeSubDomains");
   });
 
   it("does not throw if socket is destroyed", () => {
