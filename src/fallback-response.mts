@@ -4,12 +4,19 @@ const FALLBACK_BODY = "Not Found";
 const ERROR_STATUS = 500;
 const ERROR_BODY = "Internal Server Error";
 const TEXT_PLAIN_CONTENT_TYPE = "text/plain; charset=utf-8";
-const FALLBACK_HEADERS = {
-  "Content-Type": TEXT_PLAIN_CONTENT_TYPE,
+export const SECURITY_HEADERS = {
   "X-XSS-Protection": "0",
   "X-Frame-Options": "SAMEORIGIN",
   "X-Content-Type-Options": "nosniff",
   "Strict-Transport-Security": "max-age=15552000; includeSubDomains",
+  "Referrer-Policy": "no-referrer",
+  "X-DNS-Prefetch-Control": "off",
+  "X-Download-Options": "noopen",
+  "X-Permitted-Cross-Domain-Policies": "none",
+} as const;
+const FALLBACK_HEADERS = {
+  "Content-Type": TEXT_PLAIN_CONTENT_TYPE,
+  ...SECURITY_HEADERS,
 } as const;
 
 export function ensureFallbackHeaders(res: ServerResponse): void {
