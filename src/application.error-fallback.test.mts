@@ -143,6 +143,7 @@ describe("Application error fallback (#1948)", () => {
       expect(res.text).toBe("Internal Server Error");
       expect(res.headers["content-type"]).toBe("text/plain; charset=utf-8");
       expect(res.headers["x-content-type-options"]).toBe("nosniff");
+      expect(res.headers["strict-transport-security"]).toBeDefined();
     });
   });
 

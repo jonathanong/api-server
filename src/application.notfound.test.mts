@@ -13,6 +13,7 @@ describe("Application not-found handling", () => {
       expect(res.text).toBe("Not Found");
       expect(res.headers["content-type"]).toBe("text/plain; charset=utf-8");
       expect(res.headers["x-content-type-options"]).toBe("nosniff");
+      expect(res.headers["strict-transport-security"]).toBeDefined();
     });
   });
 
