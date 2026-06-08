@@ -253,38 +253,28 @@ describe("Application outer safety-net (handleRequest catch)", () => {
     expect(mockRes.body).toBe("Internal Server Error");
   });
 
-  it("wraps non-Error thrown value into an Error", async () => {
+  it("wraps non-Error thrown value into an Error, gracefully handling null prototype objects", async () => {
     const app = new Application();
     const errors: Error[] = [];
     app.on("error", (err: Error) => errors.push(err));
-    const [mockReq, mockRes] = makeThrowingReqRes("string error");
-    await new Promise<void>((resolve) => {
-      const origEnd = mockRes.end.bind(mockRes);
-      (mockRes as unknown as Record<string, unknown>).end = (data?: string) => {
-        origEnd(data);
-        resolve();
-      };
-      app.callback()(mockReq, mockRes);
-    });
-    expect(errors[0]).toBeInstanceOf(Error);
-    expect(errors[0].message).toBe("string error");
-  });
 
-  it("handles null prototype objects gracefully", async () => {
-    const app = new Application();
-    const errors: Error[] = [];
-    app.on("error", (err: Error) => errors.push(err));
-    const [mockReq, mockRes] = makeThrowingReqRes(Object.create(null));
-    await new Promise<void>((resolve) => {
-      const origEnd = mockRes.end.bind(mockRes);
-      (mockRes as unknown as Record<string, unknown>).end = (data?: string) => {
-        origEnd(data);
-        resolve();
-      };
-      app.callback()(mockReq, mockRes);
-    });
-    expect(errors[0]).toBeInstanceOf(Error);
-    expect(errors[0].message).toBe("[Object null prototype]");
+    const verifyThrow = async (throwVal: unknown, expectedMsg: string) => {
+      const [mockReq, mockRes] = makeThrowingReqRes(throwVal);
+      await new Promise<void>((resolve) => {
+        const origEnd = mockRes.end.bind(mockRes);
+        (mockRes as unknown as Record<string, unknown>).end = (data?: string) => {
+          origEnd(data);
+          resolve();
+        };
+        app.callback()(mockReq, mockRes);
+      });
+      const err = errors.pop();
+      expect(err).toBeInstanceOf(Error);
+      expect(err?.message).toBe(expectedMsg);
+    };
+
+    await verifyThrow("string error", "string error");
+    await verifyThrow(Object.create(null), "[Object null prototype]");
   });
 
   it("swallows error-listener throws and still sends 500", async () => {
