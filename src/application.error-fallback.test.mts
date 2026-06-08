@@ -270,6 +270,23 @@ describe("Application outer safety-net (handleRequest catch)", () => {
     expect(errors[0].message).toBe("string error");
   });
 
+  it("handles null prototype objects gracefully", async () => {
+    const app = new Application();
+    const errors: Error[] = [];
+    app.on("error", (err: Error) => errors.push(err));
+    const [mockReq, mockRes] = makeThrowingReqRes(Object.create(null));
+    await new Promise<void>((resolve) => {
+      const origEnd = mockRes.end.bind(mockRes);
+      (mockRes as unknown as Record<string, unknown>).end = (data?: string) => {
+        origEnd(data);
+        resolve();
+      };
+      app.callback()(mockReq, mockRes);
+    });
+    expect(errors[0]).toBeInstanceOf(Error);
+    expect(errors[0].message).toBe("[Object null prototype]");
+  });
+
   it("swallows error-listener throws and still sends 500", async () => {
     const app = new Application();
     app.on("error", () => {
