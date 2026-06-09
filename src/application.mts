@@ -118,6 +118,7 @@ export class Application extends EventEmitter {
     res.setHeader("X-XSS-Protection", "0");
     res.setHeader("X-Frame-Options", "SAMEORIGIN");
     res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Referrer-Policy", "no-referrer");
 
     try {
       const method = req.method ?? "GET";

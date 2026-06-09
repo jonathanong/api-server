@@ -15,6 +15,7 @@ describe("sendFallback", () => {
     expect(res.body).toBe("Internal Server Error");
     expect(res.getHeader("Content-Type")).toBe("text/plain; charset=utf-8");
     expect(res.getHeader("X-Content-Type-Options")).toBe("nosniff");
+    expect(res.getHeader("Referrer-Policy")).toBe("no-referrer");
   });
 
   it("does not throw if socket is destroyed", () => {
@@ -36,6 +37,7 @@ describe("ensureFallbackHeaders", () => {
     expect(res.getHeader("X-XSS-Protection")).toBe("0");
     expect(res.getHeader("X-Frame-Options")).toBe("SAMEORIGIN");
     expect(res.getHeader("X-Content-Type-Options")).toBe("nosniff");
+    expect(res.getHeader("Referrer-Policy")).toBe("no-referrer");
   });
 
   it("does not overwrite existing headers", () => {
