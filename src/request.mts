@@ -11,15 +11,18 @@ export class Request {
   private res: ServerResponse;
   private bodyPromise: Promise<Buffer> | null = null;
   private defaultLimit: string | number | false;
+  private strictJsonContentType: boolean;
 
   constructor(
     req: IncomingMessage,
     res: ServerResponse,
     defaultLimit: string | number | false = "1mb",
+    strictJsonContentType = false,
   ) {
     this.req = req;
     this.res = res;
     this.defaultLimit = defaultLimit;
+    this.strictJsonContentType = strictJsonContentType;
   }
 
   is(type: string | string[]): string | false | null {
@@ -38,6 +41,23 @@ export class Request {
   }
 
   async json<T = unknown>(limit?: string | number | false): Promise<T> {
+    if (this.strictJsonContentType) {
+      // type-is semantics:
+      //   null  → no body (no Content-Length / Transfer-Encoding header);
+      //           skip the content-type check — buffer() will return an empty
+      //           buffer that JSON.parse rejects with 400 as usual.
+      //   false → a body is indicated but Content-Type is not a JSON type.
+      //           We 415 only when the body actually has content (CL > 0 or
+      //           Transfer-Encoding is set without CL). A Content-Length: 0
+      //           body has nothing to read, so let it fall through to 400.
+      //   truthy → recognised JSON type; proceed normally.
+      const mediaType = this.is(["json", "application/*+json"]);
+      const cl = this.req.headers["content-length"];
+      const emptyBody = cl !== undefined && Number(cl) === 0;
+      if (mediaType === false && !emptyBody) {
+        throw Object.assign(new Error("Unsupported Media Type"), { status: 415 });
+      }
+    }
     const buf = await this.buffer(limit);
     try {
       return JSON.parse(buf.toString("utf8")) as T;

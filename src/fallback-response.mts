@@ -58,6 +58,14 @@ function escapeHtml(unsafe: string): string {
     .replaceAll("'", "&#039;");
 }
 
+export function safeString(err: unknown): string {
+  try {
+    return String(err);
+  } catch {
+    return "[Object null prototype]";
+  }
+}
+
 export function getFallbackBody(error: unknown, status: number): string {
   if (status >= 500) return ERROR_BODY;
   const err = error as { message?: unknown; expose?: unknown } | null;
