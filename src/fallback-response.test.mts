@@ -42,6 +42,7 @@ describe("ensureFallbackHeaders", () => {
     expect(res.getHeader("X-DNS-Prefetch-Control")).toBe("off");
     expect(res.getHeader("X-Download-Options")).toBe("noopen");
     expect(res.getHeader("X-Permitted-Cross-Domain-Policies")).toBe("none");
+    expect(res.getHeader("Content-Security-Policy")).toBe("default-src 'none'");
   });
 
   it("does not overwrite existing headers", () => {

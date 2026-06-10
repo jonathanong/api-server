@@ -282,6 +282,7 @@ describe("Application", () => {
       expect(res.headers["x-dns-prefetch-control"]).toBe("off");
       expect(res.headers["x-download-options"]).toBe("noopen");
       expect(res.headers["x-permitted-cross-domain-policies"]).toBe("none");
+      expect(res.headers["content-security-policy"]).toBe("default-src 'none'");
     });
   });
 
