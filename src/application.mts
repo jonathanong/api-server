@@ -36,12 +36,14 @@ export class Application extends EventEmitter {
   private logger: Logger;
   private bodyLimit: string | number | false;
   private trustProxy: boolean;
+  private strictJsonContentType: boolean;
 
   constructor(options?: ApplicationOptions) {
     super();
     this.logger = new Logger(options?.logger);
     this.bodyLimit = options?.bodyLimit ?? "1mb";
     this.trustProxy = options?.trustProxy ?? false;
+    this.strictJsonContentType = options?.strictJsonContentType ?? false;
   }
 
   route(path: string): RouteBuilder {
@@ -122,6 +124,7 @@ export class Application extends EventEmitter {
       this.bodyLimit,
       this.trustProxy,
       onWriteHead,
+      this.strictJsonContentType,
     );
 
     // Security headers
