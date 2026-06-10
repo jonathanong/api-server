@@ -14,6 +14,15 @@ import {
   sendFallback,
   SECURITY_HEADERS,
 } from "./fallback-response.mts";
+
+function safeString(err: unknown): string {
+  try {
+    return String(err);
+  } catch {
+    return "[Object null prototype]";
+  }
+}
+
 export type ErrorHandler = (ctx: Context, error: Error) => Promise<void> | void;
 export type NotFoundHandler = (ctx: Context) => Promise<void> | void;
 
@@ -68,7 +77,7 @@ export class Application extends EventEmitter {
         // Safety net: if runRequest rejects before its own try-catch (e.g. during
         // context/timing setup), ensure the client always gets a response instead
         // of a socket hang-up from an unhandled promise rejection.
-        const error = err instanceof Error ? err : new Error(String(err));
+        const error = err instanceof Error ? err : new Error(safeString(err));
         try {
           if (this.listenerCount("error") > 0) {
             this.emit("error", error);
@@ -145,7 +154,7 @@ export class Application extends EventEmitter {
 
       onFinish(res.statusCode);
     } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
+      const error = err instanceof Error ? err : new Error(safeString(err));
 
       if (this.listenerCount("error") > 0) {
         this.emit("error", error);
