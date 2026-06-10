@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import request from "supertest";
 import { AsyncLocalStorage } from "node:async_hooks";
+import http from "node:http";
+import type { AddressInfo } from "node:net";
 import { Application, createApp } from "./application.mts";
 import type { Context } from "./context.mts";
 import { withServer } from "./test-helpers/with-server.mts";
@@ -545,5 +547,63 @@ describe("Application", () => {
     const error = await errorReceived;
     expect(error.message).toBe("post-header error");
     expect(mockRes.statusCode).toBe(200);
+  });
+
+  it("responds with 400 Bad Request for malformed absolute URLs", async () => {
+    const app = new Application();
+    app.route("/").get((ctx) => {
+      ctx.json({ ok: true });
+    });
+
+    await withServer(app.callback(), async (server) => {
+      const address = server.address() as AddressInfo;
+      const res = await new Promise<{ status: number }>((resolve, reject) => {
+        const req = http.request(
+          {
+            port: address.port,
+            path: "http://[/foo",
+            method: "GET",
+          },
+          (mockRes) => {
+            mockRes.on("data", () => {});
+            mockRes.on("end", () => {
+              resolve({ status: mockRes.statusCode ?? 0 });
+            });
+          },
+        );
+        req.on("error", reject);
+        req.end();
+      });
+      expect(res.status).toBe(400);
+    });
+  });
+
+  it("responds with 400 Bad Request for malformed absolute URLs with uppercase scheme", async () => {
+    const app = new Application();
+    app.route("/").get((ctx) => {
+      ctx.json({ ok: true });
+    });
+
+    await withServer(app.callback(), async (server) => {
+      const address = server.address() as AddressInfo;
+      const res = await new Promise<{ status: number }>((resolve, reject) => {
+        const req = http.request(
+          {
+            port: address.port,
+            path: "HTTP://[/foo",
+            method: "GET",
+          },
+          (mockRes) => {
+            mockRes.on("data", () => {});
+            mockRes.on("end", () => {
+              resolve({ status: mockRes.statusCode ?? 0 });
+            });
+          },
+        );
+        req.on("error", reject);
+        req.end();
+      });
+      expect(res.status).toBe(400);
+    });
   });
 });

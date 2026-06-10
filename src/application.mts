@@ -123,10 +123,7 @@ export class Application extends EventEmitter {
     try {
       const method = req.method ?? "GET";
       const url = req.url ?? "/";
-      const rawPath =
-        url.startsWith("http://") || url.startsWith("https://")
-          ? new URL(url).pathname
-          : url.split("?")[0];
+      const rawPath = getRawPath(url);
       const routePath = rawPath.replace(/^\/+/, "/") || "/";
 
       const found = this.router.find(method as Router.HTTPMethod, routePath);
@@ -179,4 +176,16 @@ export class Application extends EventEmitter {
     }
   }
 }
+function getRawPath(url: string): string {
+  const lower = url.slice(0, 8).toLowerCase();
+  if (lower.startsWith("http://") || lower.startsWith("https://")) {
+    try {
+      return new URL(url).pathname;
+    } catch {
+      throw Object.assign(new Error("Invalid URL"), { status: 400 });
+    }
+  }
+  return url.split("?")[0];
+}
+
 export const createApp = (options?: ApplicationOptions): Application => new Application(options);
