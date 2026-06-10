@@ -148,8 +148,8 @@ export class Logger {
 function noop(): void {}
 
 function sanitize(str: string): string {
-  // eslint-disable-next-line no-control-regex
+  // oxlint-disable no-control-regex
   return str
-    .replace(/\x1B\[[0-9;]*[a-zA-Z]/g, "")
-    .replace(/[\x00-\x1F\x7F-\x9F\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, "");
+    .replace(/\u001B\[[0-9;]*[a-zA-Z]/g, "")
+    .replace(/[\u0000-\u001F\u007F-\u009F\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, "");
 }

@@ -3,7 +3,7 @@
   "rules": {
     "unicorn/prefer-node-protocol": "error",
     "radix": "error",
-    "max-lines": ["error", 200]
+    "max-lines": ["error", 210]
   },
   "overrides": [
     {

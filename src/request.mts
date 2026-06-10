@@ -38,6 +38,9 @@ export class Request {
   }
 
   async json<T = unknown>(limit?: string | number | false): Promise<T> {
+    if (!this.is(["json"])) {
+      throw Object.assign(new Error("Unsupported Media Type"), { status: 415 });
+    }
     const buf = await this.buffer(limit);
     try {
       return JSON.parse(buf.toString("utf8")) as T;
