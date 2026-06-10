@@ -12,6 +12,7 @@ import {
   getFallbackBody,
   getFallbackStatus,
   sendFallback,
+  SECURITY_HEADERS,
 } from "./fallback-response.mts";
 export type ErrorHandler = (ctx: Context, error: Error) => Promise<void> | void;
 export type NotFoundHandler = (ctx: Context) => Promise<void> | void;
@@ -115,10 +116,9 @@ export class Application extends EventEmitter {
     );
 
     // Security headers
-    res.setHeader("X-XSS-Protection", "0");
-    res.setHeader("X-Frame-Options", "SAMEORIGIN");
-    res.setHeader("X-Content-Type-Options", "nosniff");
-    res.setHeader("Strict-Transport-Security", "max-age=15552000; includeSubDomains");
+    for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+      res.setHeader(name, value);
+    }
 
     try {
       const method = req.method ?? "GET";

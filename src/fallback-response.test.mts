@@ -37,6 +37,11 @@ describe("ensureFallbackHeaders", () => {
     expect(res.getHeader("X-XSS-Protection")).toBe("0");
     expect(res.getHeader("X-Frame-Options")).toBe("SAMEORIGIN");
     expect(res.getHeader("X-Content-Type-Options")).toBe("nosniff");
+    expect(res.getHeader("Strict-Transport-Security")).toBe("max-age=15552000; includeSubDomains");
+    expect(res.getHeader("Referrer-Policy")).toBe("no-referrer");
+    expect(res.getHeader("X-DNS-Prefetch-Control")).toBe("off");
+    expect(res.getHeader("X-Download-Options")).toBe("noopen");
+    expect(res.getHeader("X-Permitted-Cross-Domain-Policies")).toBe("none");
   });
 
   it("does not overwrite existing headers", () => {

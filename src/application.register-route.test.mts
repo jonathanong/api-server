@@ -274,9 +274,14 @@ describe("Application", () => {
 
     await withServer(app.callback(), async (server) => {
       const res = await request(server).get("/test");
-      expect(res.headers["x-xss-protection"]).toBeDefined();
-      expect(res.headers["x-frame-options"]).toBeDefined();
+      expect(res.headers["x-xss-protection"]).toBe("0");
+      expect(res.headers["x-frame-options"]).toBe("SAMEORIGIN");
       expect(res.headers["x-content-type-options"]).toBe("nosniff");
+      expect(res.headers["strict-transport-security"]).toBe("max-age=15552000; includeSubDomains");
+      expect(res.headers["referrer-policy"]).toBe("no-referrer");
+      expect(res.headers["x-dns-prefetch-control"]).toBe("off");
+      expect(res.headers["x-download-options"]).toBe("noopen");
+      expect(res.headers["x-permitted-cross-domain-policies"]).toBe("none");
     });
   });
 
