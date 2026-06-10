@@ -11,17 +11,10 @@ import {
   ensureFallbackHeaders,
   getFallbackBody,
   getFallbackStatus,
+  safeString,
   sendFallback,
   SECURITY_HEADERS,
 } from "./fallback-response.mts";
-
-function safeString(err: unknown): string {
-  try {
-    return String(err);
-  } catch {
-    return "[Object null prototype]";
-  }
-}
 
 export type ErrorHandler = (ctx: Context, error: Error) => Promise<void> | void;
 export type NotFoundHandler = (ctx: Context) => Promise<void> | void;
