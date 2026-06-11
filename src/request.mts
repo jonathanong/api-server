@@ -35,7 +35,7 @@ export class Request {
       if (this.req.headers.expect === "100-continue") {
         this.res.writeContinue();
       }
-      this.bodyPromise = readBody(this.req, effectiveLimit);
+      this.bodyPromise = readBody(this.req, this.res, effectiveLimit);
     }
     return this.bodyPromise;
   }
@@ -76,9 +76,23 @@ function parseLimit(limit: string | number | false): number {
   return parsed;
 }
 
-function readBody(req: IncomingMessage, limit: string | number | false): Promise<Buffer> {
+function readBody(
+  req: IncomingMessage,
+  res: ServerResponse,
+  limit: string | number | false,
+): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const maxBytes = parseLimit(limit);
+
+    // Fast-fail if Content-Length exceeds the limit
+    const contentLength = req.headers["content-length"];
+    if (contentLength !== undefined && Number(contentLength) > maxBytes) {
+      if (typeof res.setHeader === "function" && !res.headersSent) {
+        res.setHeader("Connection", "close");
+      }
+      req.pause();
+      return reject(Object.assign(new Error("Request entity too large"), { status: 413 }));
+    }
     const chunks: Buffer[] = [];
     let totalLength = 0;
 
@@ -97,9 +111,14 @@ function readBody(req: IncomingMessage, limit: string | number | false): Promise
         req.removeListener("end", onEnd);
         req.removeListener("error", onError);
         req.on("error", noop);
+
+        // Force connection close to prevent DoS from infinite streams
+        if (typeof res.setHeader === "function" && !res.headersSent) {
+          res.setHeader("Connection", "close");
+        }
+        req.pause();
+
         reject(Object.assign(new Error("Request entity too large"), { status: 413 }));
-        // Drain remaining data so the connection stays reusable (HTTP keep-alive)
-        req.resume();
         return;
       }
       chunks.push(chunk);
