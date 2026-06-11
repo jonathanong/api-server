@@ -87,7 +87,7 @@ function readBody(
     // Fast-fail if Content-Length exceeds the limit
     const contentLength = req.headers["content-length"];
     if (contentLength !== undefined && Number(contentLength) > maxBytes) {
-      if (typeof res.setHeader === "function" && !res.headersSent) {
+      if (!res.headersSent) {
         res.setHeader("Connection", "close");
       }
       req.pause();
@@ -113,7 +113,7 @@ function readBody(
         req.on("error", noop);
 
         // Force connection close to prevent DoS from infinite streams
-        if (typeof res.setHeader === "function" && !res.headersSent) {
+        if (!res.headersSent) {
           res.setHeader("Connection", "close");
         }
         req.pause();

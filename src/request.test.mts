@@ -249,7 +249,10 @@ describe("Request", () => {
     const errorStream = new Readable({ read() {} });
     (errorStream as unknown as Record<string, unknown>).headers = {};
     const mockReq = errorStream as unknown as import("node:http").IncomingMessage;
-    const mockRes = {} as unknown as import("node:http").ServerResponse;
+    const mockRes = {
+      headersSent: false,
+      setHeader: () => {},
+    } as unknown as import("node:http").ServerResponse;
 
     const req = new RequestClass(mockReq, mockRes);
     const bufPromise = req.buffer();
@@ -293,7 +296,10 @@ describe("Request", () => {
     const stream = new Readable({ read() {} });
     (stream as unknown as Record<string, unknown>).headers = {};
     const mockReq = stream as unknown as import("node:http").IncomingMessage;
-    const mockRes = {} as unknown as import("node:http").ServerResponse;
+    const mockRes = {
+      headersSent: false,
+      setHeader: () => {},
+    } as unknown as import("node:http").ServerResponse;
 
     const req = new RequestClass(mockReq, mockRes);
     const bufPromise = req.buffer("1b");
