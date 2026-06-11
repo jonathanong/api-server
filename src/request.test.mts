@@ -124,7 +124,7 @@ describe("Request", () => {
     });
   });
 
-  it("drains request stream after 413 - subsequent request succeeds", async () => {
+  it("closes connection after 413", async () => {
     const app = new Application();
     app.route("/test").post(async (ctx) => {
       await ctx.request.buffer("1b");
@@ -139,12 +139,8 @@ describe("Request", () => {
         .send(Buffer.from("this is more than 1 byte"));
       expect(first.status).toBe(413);
 
-      // Second request should succeed (stream was drained, connection is reusable)
-      const second = await request(server)
-        .post("/test")
-        .set("Content-Type", "application/octet-stream")
-        .send(Buffer.from("x"));
-      expect(second.status).toBe(200);
+      // In HTTP 1.1 with supertest, we test that the response has connection: close
+      expect(first.headers.connection).toBe("close");
     });
   });
 
@@ -253,7 +249,10 @@ describe("Request", () => {
     const errorStream = new Readable({ read() {} });
     (errorStream as unknown as Record<string, unknown>).headers = {};
     const mockReq = errorStream as unknown as import("node:http").IncomingMessage;
-    const mockRes = {} as unknown as import("node:http").ServerResponse;
+    const mockRes = {
+      headersSent: false,
+      setHeader: () => {},
+    } as unknown as import("node:http").ServerResponse;
 
     const req = new RequestClass(mockReq, mockRes);
     const bufPromise = req.buffer();
@@ -297,7 +296,10 @@ describe("Request", () => {
     const stream = new Readable({ read() {} });
     (stream as unknown as Record<string, unknown>).headers = {};
     const mockReq = stream as unknown as import("node:http").IncomingMessage;
-    const mockRes = {} as unknown as import("node:http").ServerResponse;
+    const mockRes = {
+      headersSent: false,
+      setHeader: () => {},
+    } as unknown as import("node:http").ServerResponse;
 
     const req = new RequestClass(mockReq, mockRes);
     const bufPromise = req.buffer("1b");
