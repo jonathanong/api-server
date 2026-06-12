@@ -274,6 +274,9 @@ describe("Application", () => {
 
     await withServer(app.callback(), async (server) => {
       const res = await request(server).get("/test");
+      expect(res.headers["content-security-policy"]).toBe(
+        "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests",
+      );
       expect(res.headers["x-xss-protection"]).toBe("0");
       expect(res.headers["x-frame-options"]).toBe("SAMEORIGIN");
       expect(res.headers["x-content-type-options"]).toBe("nosniff");
