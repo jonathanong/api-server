@@ -5,6 +5,8 @@ const ERROR_STATUS = 500;
 const ERROR_BODY = "Internal Server Error";
 const TEXT_PLAIN_CONTENT_TYPE = "text/plain; charset=utf-8";
 export const SECURITY_HEADERS = {
+  "Content-Security-Policy":
+    "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests",
   "X-XSS-Protection": "0",
   "X-Frame-Options": "SAMEORIGIN",
   "X-Content-Type-Options": "nosniff",

@@ -34,6 +34,9 @@ describe("ensureFallbackHeaders", () => {
     const res = makeMockRes();
     ensureFallbackHeaders(res);
     expect(res.getHeader("Content-Type")).toBe("text/plain; charset=utf-8");
+    expect(res.getHeader("Content-Security-Policy")).toBe(
+      "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests",
+    );
     expect(res.getHeader("X-XSS-Protection")).toBe("0");
     expect(res.getHeader("X-Frame-Options")).toBe("SAMEORIGIN");
     expect(res.getHeader("X-Content-Type-Options")).toBe("nosniff");
