@@ -1,5 +1,10 @@
 import { EventEmitter } from "node:events";
-import type { IncomingMessage, ServerResponse, RequestListener } from "node:http";
+import {
+  METHODS,
+  type IncomingMessage,
+  type ServerResponse,
+  type RequestListener,
+} from "node:http";
 import type { AsyncLocalStorage } from "node:async_hooks";
 import { Context, createContextClass } from "./context.mts";
 import { createRouteBuilder, type RouteBuilder } from "./router.mts";
@@ -131,7 +136,9 @@ export class Application extends EventEmitter {
       const rawPath = getRawPath(url);
       const routePath = rawPath.replace(/^\/+/, "/") || "/";
 
-      const found = this.router.find(method as Router.HTTPMethod, routePath);
+      const found = METHODS.includes(method)
+        ? this.router.find(method as Router.HTTPMethod, routePath)
+        : null;
 
       if (found) {
         ctx.params = found.params;
