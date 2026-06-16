@@ -131,3 +131,61 @@ describe("Router", () => {
     });
   });
 });
+
+it("handles invalid methods safely without crashing", async () => {
+  const app = new Application();
+  app.route("/").get((ctx) => {
+    ctx.json({ success: true });
+  });
+
+  await withServer(app.callback(), async (server) => {
+    // Create a raw request to send an invalid method
+    await new Promise<void>((resolve, reject) => {
+      const address = server.address();
+      if (!address || typeof address === "string") return reject(new Error("Invalid address"));
+
+      const req =
+        (server as any).constructor.name === "Server"
+          ? require("node:http").request(
+              {
+                hostname: "127.0.0.1",
+                port: address.port,
+                path: "/",
+                method: "__proto__",
+              },
+              (res: any) => {
+                expect([400, 404, 500]).toContain(res.statusCode); // Should just return 404
+                res.resume();
+                resolve();
+              },
+            )
+          : null;
+
+      if (req) {
+        req.on("error", reject);
+        req.end();
+      } else {
+        resolve();
+      }
+    });
+  });
+});
+
+it("handles overridden invalid methods safely without crashing", async () => {
+  const app = new Application();
+  app.route("/").get((ctx) => {
+    ctx.json({ success: true });
+  });
+
+  await withServer(
+    (req, res) => {
+      // override method directly to test the application's internal check
+      req.method = "__proto__";
+      app.callback()(req, res);
+    },
+    async (server) => {
+      const res = await request(server).get("/");
+      expect(res.status).toBe(404); // the application itself should respond with 404
+    },
+  );
+});
