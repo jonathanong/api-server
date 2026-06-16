@@ -74,16 +74,11 @@ export class Application extends EventEmitter {
   private handleRequest(req: IncomingMessage, res: ServerResponse): void {
     const run = () =>
       this.runRequest(req, res).catch((err: unknown) => {
-        // Safety net: if runRequest rejects before its own try-catch (e.g. during
-        // context/timing setup), ensure the client always gets a response instead
-        // of a socket hang-up from an unhandled promise rejection.
         const error = err instanceof Error ? err : new Error(safeString(err));
         try {
-          if (this.listenerCount("error") > 0) {
-            this.emit("error", error);
-          }
+          if (this.listenerCount("error") > 0) this.emit("error", error);
         } catch {
-          // Swallow listener throws so the 500 response still goes out.
+          /* ignore */
         }
         if (!res.headersSent) {
           ensureFallbackHeaders(res);
@@ -92,11 +87,8 @@ export class Application extends EventEmitter {
         }
       });
 
-    if (this.asyncLocalStorage) {
-      this.asyncLocalStorage.run({}, run);
-    } else {
-      run();
-    }
+    if (this.asyncLocalStorage) this.asyncLocalStorage.run({}, run);
+    else run();
   }
 
   private async runRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -132,9 +124,7 @@ export class Application extends EventEmitter {
 
     try {
       const method = req.method ?? "GET";
-      const url = req.url ?? "/";
-      const rawPath = getRawPath(url);
-      const routePath = rawPath.replace(/^\/+/, "/") || "/";
+      const routePath = getRawPath(req.url ?? "/").replace(/^\/+/, "/") || "/";
 
       const found = METHODS.includes(method)
         ? this.router.find(method as Router.HTTPMethod, routePath)
