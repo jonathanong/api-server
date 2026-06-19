@@ -16,6 +16,7 @@ describe("sendFallback", () => {
     expect(res.getHeader("Content-Type")).toBe("text/plain; charset=utf-8");
     expect(res.getHeader("X-Content-Type-Options")).toBe("nosniff");
     expect(res.getHeader("Strict-Transport-Security")).toBe("max-age=15552000; includeSubDomains");
+    expect(res.getHeader("Content-Security-Policy")).toBe("default-src 'none'");
   });
 
   it("does not throw if socket is destroyed", () => {
@@ -42,6 +43,7 @@ describe("ensureFallbackHeaders", () => {
     expect(res.getHeader("X-DNS-Prefetch-Control")).toBe("off");
     expect(res.getHeader("X-Download-Options")).toBe("noopen");
     expect(res.getHeader("X-Permitted-Cross-Domain-Policies")).toBe("none");
+    expect(res.getHeader("Content-Security-Policy")).toBe("default-src 'none'");
   });
 
   it("does not overwrite existing headers", () => {
