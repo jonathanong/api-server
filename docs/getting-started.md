@@ -77,14 +77,44 @@ Options:
   default limit.
 - `trustProxy`: when `true`, `ctx.ip` may use `cf-connecting-ip` and
   `x-forwarded-for`. Defaults to `false`, so `ctx.ip` uses the socket address.
+- `securityHeaders`: custom values or `false` for the security headers described
+  below.
 - `logger`: see [logger.md](logger.md).
 
 ## Security headers
 
-Every response automatically includes:
+By default, every normal and fallback response includes:
 
 - `X-XSS-Protection: 0`
 - `X-Frame-Options: SAMEORIGIN`
 - `X-Content-Type-Options: nosniff`
 
-These are set unconditionally by the framework before the route handler runs.
+The complete set of configurable headers is:
+
+| Header                              | Default      |
+| ----------------------------------- | ------------ |
+| `X-XSS-Protection`                  | `0`          |
+| `X-Frame-Options`                   | `SAMEORIGIN` |
+| `X-Content-Type-Options`            | `nosniff`    |
+| `Strict-Transport-Security`         | Off          |
+| `Referrer-Policy`                   | Off          |
+| `X-DNS-Prefetch-Control`            | Off          |
+| `X-Download-Options`                | Off          |
+| `X-Permitted-Cross-Domain-Policies` | Off          |
+
+Set a string to customize or enable a header. Set `false` to disable a default:
+
+```ts
+const app = createApp({
+  securityHeaders: {
+    "X-Frame-Options": false,
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+  },
+});
+```
+
+Omitted entries keep their documented defaults. The framework applies the
+resolved values before route handlers run, so application code can still
+overwrite them with `ctx.set()` or `ctx.res.setHeader()` before the response is
+sent.

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import request from "supertest";
-import { Application } from "./application.mts";
+import { Application, createApp } from "./application.mts";
 import { withServer } from "./test-helpers/with-server.mts";
 
 describe("Application not-found handling", () => {
@@ -13,6 +13,31 @@ describe("Application not-found handling", () => {
       expect(res.text).toBe("Not Found");
       expect(res.headers["content-type"]).toBe("text/plain; charset=utf-8");
       expect(res.headers["x-content-type-options"]).toBe("nosniff");
+      expect(res.headers["x-xss-protection"]).toBe("0");
+      expect(res.headers["x-frame-options"]).toBe("SAMEORIGIN");
+      expect(res.headers["strict-transport-security"]).toBeUndefined();
+      expect(res.headers["referrer-policy"]).toBeUndefined();
+      expect(res.headers["x-dns-prefetch-control"]).toBeUndefined();
+      expect(res.headers["x-download-options"]).toBeUndefined();
+      expect(res.headers["x-permitted-cross-domain-policies"]).toBeUndefined();
+    });
+  });
+
+  it("uses configured security headers for factory-created 404 responses", async () => {
+    const app = createApp({
+      securityHeaders: {
+        "X-Frame-Options": false,
+        "Strict-Transport-Security": "max-age=31536000",
+      },
+    });
+
+    await withServer(app.callback(), async (server) => {
+      const res = await request(server).get("/does-not-exist");
+      expect(res.status).toBe(404);
+      expect(res.headers["x-xss-protection"]).toBe("0");
+      expect(res.headers["x-frame-options"]).toBeUndefined();
+      expect(res.headers["x-content-type-options"]).toBe("nosniff");
+      expect(res.headers["strict-transport-security"]).toBe("max-age=31536000");
     });
   });
 

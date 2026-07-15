@@ -5,7 +5,23 @@ import http from "node:http";
 import type { AddressInfo } from "node:net";
 import { Application, createApp } from "./application.mts";
 import type { Context } from "./context.mts";
+import type { SecurityHeaderName, SecurityHeadersOptions } from "./index.mts";
 import { withServer } from "./test-helpers/with-server.mts";
+
+const SECURITY_HEADER_NAMES = [
+  "X-XSS-Protection",
+  "X-Frame-Options",
+  "X-Content-Type-Options",
+  "Strict-Transport-Security",
+  "Referrer-Policy",
+  "X-DNS-Prefetch-Control",
+  "X-Download-Options",
+  "X-Permitted-Cross-Domain-Policies",
+] as const satisfies readonly SecurityHeaderName[];
+
+const CUSTOM_SECURITY_HEADERS = Object.fromEntries(
+  SECURITY_HEADER_NAMES.map((name) => [name, `custom-${name}`]),
+) as Record<SecurityHeaderName, string>;
 
 describe("Application", () => {
   it("registers GET route", async () => {
@@ -277,11 +293,58 @@ describe("Application", () => {
       expect(res.headers["x-xss-protection"]).toBe("0");
       expect(res.headers["x-frame-options"]).toBe("SAMEORIGIN");
       expect(res.headers["x-content-type-options"]).toBe("nosniff");
-      expect(res.headers["strict-transport-security"]).toBe("max-age=15552000; includeSubDomains");
-      expect(res.headers["referrer-policy"]).toBe("no-referrer");
-      expect(res.headers["x-dns-prefetch-control"]).toBe("off");
-      expect(res.headers["x-download-options"]).toBe("noopen");
-      expect(res.headers["x-permitted-cross-domain-policies"]).toBe("none");
+      expect(res.headers["strict-transport-security"]).toBeUndefined();
+      expect(res.headers["referrer-policy"]).toBeUndefined();
+      expect(res.headers["x-dns-prefetch-control"]).toBeUndefined();
+      expect(res.headers["x-download-options"]).toBeUndefined();
+      expect(res.headers["x-permitted-cross-domain-policies"]).toBeUndefined();
+    });
+  });
+
+  it("sets custom values for every supported security header", async () => {
+    const app = new Application({ securityHeaders: CUSTOM_SECURITY_HEADERS });
+    app.route("/test").get((ctx) => ctx.json({ ok: true }));
+
+    await withServer(app.callback(), async (server) => {
+      const res = await request(server).get("/test");
+      for (const name of SECURITY_HEADER_NAMES) {
+        expect(res.headers[name.toLowerCase()]).toBe(CUSTOM_SECURITY_HEADERS[name]);
+      }
+    });
+  });
+
+  it.each(SECURITY_HEADER_NAMES)(
+    "disables %s without changing other configured headers",
+    async (disabled) => {
+      const securityHeaders: SecurityHeadersOptions = {
+        ...CUSTOM_SECURITY_HEADERS,
+        [disabled]: false,
+      };
+      const app = new Application({ securityHeaders });
+      app.route("/test").get((ctx) => ctx.json({ ok: true }));
+
+      await withServer(app.callback(), async (server) => {
+        const res = await request(server).get("/test");
+        expect(res.headers[disabled.toLowerCase()]).toBeUndefined();
+        for (const name of SECURITY_HEADER_NAMES) {
+          if (name !== disabled) {
+            expect(res.headers[name.toLowerCase()]).toBe(CUSTOM_SECURITY_HEADERS[name]);
+          }
+        }
+      });
+    },
+  );
+
+  it("allows route handlers to overwrite configured security headers", async () => {
+    const app = new Application();
+    app.route("/test").get((ctx) => {
+      ctx.set("X-Frame-Options", "DENY");
+      ctx.json({ ok: true });
+    });
+
+    await withServer(app.callback(), async (server) => {
+      const res = await request(server).get("/test");
+      expect(res.headers["x-frame-options"]).toBe("DENY");
     });
   });
 
@@ -409,6 +472,10 @@ describe("Application", () => {
     await withServer(app.callback(), async (server) => {
       const res = await request(server).get("/test");
       expect(res.body.factory).toBe(true);
+      expect(res.headers["x-xss-protection"]).toBe("0");
+      expect(res.headers["x-frame-options"]).toBe("SAMEORIGIN");
+      expect(res.headers["x-content-type-options"]).toBe("nosniff");
+      expect(res.headers["strict-transport-security"]).toBeUndefined();
     });
   });
 

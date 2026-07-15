@@ -11,4 +11,9 @@ export * from "./etag.mts";
 export * from "./cache-control.mts";
 export * from "./compression.mts";
 export type { Handler, RouteBuilder } from "./router.mts";
-export type { CookieOptions, ApplicationOptions } from "./types.mts";
+export type {
+  CookieOptions,
+  ApplicationOptions,
+  SecurityHeaderName,
+  SecurityHeadersOptions,
+} from "./types.mts";
