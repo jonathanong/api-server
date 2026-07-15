@@ -364,6 +364,7 @@ describe("Response", () => {
     const app = new Application();
     app.route("/big").get((ctx) => {
       // body > 1024 bytes triggers compression
+      ctx.res.setHeader("Vary", "Origin, accept-encoding, ORIGIN");
       ctx.json({ data: "x".repeat(2000) });
     });
 
@@ -378,7 +379,21 @@ describe("Response", () => {
           res.on("end", () => callback(null, Buffer.concat(chunks)));
         });
       expect(res.headers["content-encoding"]).toBe("gzip");
-      expect(res.headers["vary"]).toContain("Accept-Encoding");
+      expect(res.headers["vary"]).toBe("Origin, accept-encoding");
+    });
+  });
+
+  it("preserves Vary when a buffered response is not compressed", async () => {
+    const app = new Application();
+    app.route("/small").get((ctx) => {
+      ctx.res.setHeader("Vary", "Origin");
+      ctx.response.text("small");
+    });
+
+    await withServer(app.callback(), async (server) => {
+      const res = await request(server).get("/small").set("Accept-Encoding", "gzip");
+      expect(res.headers["content-encoding"]).toBeUndefined();
+      expect(res.headers["vary"]).toBe("Origin");
     });
   });
 });
