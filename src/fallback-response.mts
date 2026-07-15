@@ -49,6 +49,7 @@ export function applySecurityHeaders(
 export function ensureFallbackHeaders(
   res: ServerResponse,
   securityHeaders: ResolvedSecurityHeaders = SECURITY_HEADERS,
+  contentSecurityPolicy: string | false = false,
 ): void {
   for (const [name, value] of Object.entries({
     "Content-Type": TEXT_PLAIN_CONTENT_TYPE,
@@ -62,14 +63,24 @@ export function ensureFallbackHeaders(
       // Header mutation can fail on destroyed sockets or non-standard responses.
     }
   }
+  if (contentSecurityPolicy !== false) {
+    try {
+      if (typeof res.hasHeader !== "function" || !res.hasHeader("Content-Security-Policy")) {
+        res.setHeader("Content-Security-Policy", contentSecurityPolicy);
+      }
+    } catch {
+      // Header mutation can fail on destroyed sockets or non-standard responses.
+    }
+  }
 }
 
 export function sendFallback(
   res: ServerResponse,
   securityHeaders: ResolvedSecurityHeaders = SECURITY_HEADERS,
+  contentSecurityPolicy: string | false = false,
 ): void {
   try {
-    ensureFallbackHeaders(res, securityHeaders);
+    ensureFallbackHeaders(res, securityHeaders, contentSecurityPolicy);
     res.writeHead(ERROR_STATUS);
     res.end(ERROR_BODY);
   } catch {

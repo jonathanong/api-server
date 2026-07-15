@@ -8,6 +8,7 @@ import { Cookies } from "./cookies.mts";
 import { applyCacheControl } from "./cache-control.mts";
 import type { ServerTiming } from "./server-timing.mts";
 import { resolveTrustedClientIp } from "./trusted-client-ip.mts";
+import type { OversizedBodyStrategy } from "./types.mts";
 
 const CONTENT_TYPES: Record<string, string> = {
   json: "application/json; charset=utf-8",
@@ -44,11 +45,18 @@ export class Context {
     trustProxy: boolean,
     onWriteHead?: () => void,
     strictJsonContentType?: boolean,
+    oversizedBodyStrategy?: OversizedBodyStrategy,
   ) {
     this.req = req;
     this.res = res;
     this.params = params;
-    this.request = new Request(req, res, bodyLimit, strictJsonContentType ?? false);
+    this.request = new Request(
+      req,
+      res,
+      bodyLimit,
+      strictJsonContentType ?? false,
+      oversizedBodyStrategy ?? "drain",
+    );
     this.response = new Response(req, res, timing, onWriteHead);
     this.cookies = new Cookies(req, res);
     this.abortController = abortController;

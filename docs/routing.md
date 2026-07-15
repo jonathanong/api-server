@@ -62,6 +62,19 @@ app.route("/data").get((ctx) => {
 // HEAD /data is handled automatically — returns headers, no body
 ```
 
+## Strict HTTP methods
+
+By default, request methods are passed through to the router unchanged. Set
+`strictHttpMethods: true` to reject methods outside Node's `http.METHODS` set
+with `400 Unsupported HTTP method` before router lookup:
+
+```ts
+const app = createApp({ strictHttpMethods: true });
+```
+
+The default remains permissive so applications using extension methods keep
+their existing behavior.
+
 ## Route parameters
 
 Named segments (`:name`) are captured in `ctx.params`:

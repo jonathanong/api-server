@@ -48,6 +48,7 @@ app.route("/").get((ctx) => ctx.json({ ok: true }));
 - **Server-Timing** — response latency as a `Server-Timing` header (buffered) or trailer (streaming)
 - **Abort signals** — `ctx.signal` / `ctx.abortController` wired to client disconnect
 - **Request body limits** — `ctx.request.buffer()` and `.json()` use a safe 1 MB default, with per-call overrides
+- **Opt-in hardening** — fallback CSP, close-on-oversize, and strict HTTP method policies without default behavior changes
 - **AsyncLocalStorage** — per-request store via `app.setAsyncLocalStorage(als)`
 - **Cookies** — `ctx.cookies.get()` / `.set()` with full `Set-Cookie` options
 - **Cache-Control** — `ctx.cacheControl(visibility, maxAge)` helper

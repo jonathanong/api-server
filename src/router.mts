@@ -1,3 +1,4 @@
+import { METHODS } from "node:http";
 import Router from "find-my-way";
 import type { Context } from "./context.mts";
 
@@ -11,6 +12,10 @@ export interface RouteBuilder {
   put(handler: Handler): RouteBuilder;
   delete(handler: Handler): RouteBuilder;
   patch(handler: Handler): RouteBuilder;
+}
+
+export function isSupportedHttpMethod(method: string): boolean {
+  return METHODS.includes(method);
 }
 
 export function createRouteBuilder(router: RouterInstance, path: string): RouteBuilder {

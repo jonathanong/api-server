@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
+import type { OversizedBodyStrategy } from "./types.mts";
 // @ts-ignore
 import typeIs from "type-is";
 // @ts-ignore
@@ -12,17 +13,20 @@ export class Request {
   private bodyPromise: Promise<Buffer> | null = null;
   private defaultLimit: string | number | false;
   private strictJsonContentType: boolean;
+  private readonly oversizedBodyStrategy: OversizedBodyStrategy;
 
   constructor(
     req: IncomingMessage,
     res: ServerResponse,
     defaultLimit: string | number | false = "1mb",
     strictJsonContentType = false,
+    oversizedBodyStrategy: OversizedBodyStrategy = "drain",
   ) {
     this.req = req;
     this.res = res;
     this.defaultLimit = defaultLimit;
     this.strictJsonContentType = strictJsonContentType;
+    this.oversizedBodyStrategy = oversizedBodyStrategy;
   }
 
   is(type: string | string[]): string | false | null {
@@ -32,10 +36,10 @@ export class Request {
   buffer(limit?: string | number | false): Promise<Buffer> {
     if (!this.bodyPromise) {
       const effectiveLimit = limit ?? this.defaultLimit;
-      if (this.req.headers.expect === "100-continue") {
+      if (this.oversizedBodyStrategy === "drain" && this.req.headers.expect === "100-continue") {
         this.res.writeContinue();
       }
-      this.bodyPromise = readBody(this.req, effectiveLimit);
+      this.bodyPromise = readBody(this.req, this.res, effectiveLimit, this.oversizedBodyStrategy);
     }
     return this.bodyPromise;
   }
@@ -76,9 +80,25 @@ function parseLimit(limit: string | number | false): number {
   return parsed;
 }
 
-function readBody(req: IncomingMessage, limit: string | number | false): Promise<Buffer> {
+function readBody(
+  req: IncomingMessage,
+  res: ServerResponse,
+  limit: string | number | false,
+  oversizedBodyStrategy: OversizedBodyStrategy,
+): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const maxBytes = parseLimit(limit);
+    if (oversizedBodyStrategy === "close") {
+      const contentLength = Number(req.headers["content-length"]);
+      if (Number.isFinite(contentLength) && contentLength > maxBytes) {
+        reject(createOversizedBodyError());
+        handleOversizedBody(req, res, oversizedBodyStrategy);
+        return;
+      }
+      if (req.headers.expect === "100-continue" && !res.headersSent) {
+        res.writeContinue();
+      }
+    }
     const chunks: Buffer[] = [];
     let totalLength = 0;
 
@@ -96,10 +116,8 @@ function readBody(req: IncomingMessage, limit: string | number | false): Promise
         req.removeListener("data", onData);
         req.removeListener("end", onEnd);
         req.removeListener("error", onError);
-        req.on("error", noop);
-        reject(Object.assign(new Error("Request entity too large"), { status: 413 }));
-        // Drain remaining data so the connection stays reusable (HTTP keep-alive)
-        req.resume();
+        reject(createOversizedBodyError());
+        handleOversizedBody(req, res, oversizedBodyStrategy);
         return;
       }
       chunks.push(chunk);
@@ -119,4 +137,33 @@ function readBody(req: IncomingMessage, limit: string | number | false): Promise
     req.on("end", onEnd);
     req.on("error", onError);
   });
+}
+
+function createOversizedBodyError(): Error & { status: number } {
+  return Object.assign(new Error("Request entity too large"), { status: 413 });
+}
+
+function handleOversizedBody(
+  req: IncomingMessage,
+  res: ServerResponse,
+  strategy: OversizedBodyStrategy,
+): void {
+  req.on("error", noop);
+  if (strategy === "drain") {
+    req.resume();
+    return;
+  }
+
+  req.pause();
+  if (res.headersSent) {
+    res.destroy();
+    return;
+  }
+  if ((req.httpVersionMajor ?? 1) < 2) {
+    try {
+      res.setHeader("Connection", "close");
+    } catch {
+      res.destroy();
+    }
+  }
 }

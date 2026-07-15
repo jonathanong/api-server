@@ -63,6 +63,9 @@ Optional configuration is passed as an options object:
 ```ts
 const app = createApp({
   bodyLimit: "2mb",
+  oversizedBodyStrategy: "close",
+  fallbackContentSecurityPolicy: "default-src 'none'",
+  strictHttpMethods: true,
   logger: {
     timingThresholds: { yellow: 100, orange: 500, red: 2000 },
   },
@@ -75,6 +78,16 @@ Options:
 - `bodyLimit`: default request body limit for `ctx.request.buffer()` and
   `ctx.request.json()`. Defaults to `"1mb"`. Set to `false` to disable the
   default limit.
+- `oversizedBodyStrategy`: `"drain"` preserves keep-alive after a 413 and is
+  the default. `"close"` stops consuming an oversized body and closes its
+  HTTP/1 connection or HTTP/2 stream.
+- `fallbackContentSecurityPolicy`: CSP value for framework-generated fallback
+  responses. Defaults to `false`; successful and custom responses are never
+  modified, and an existing CSP header is preserved.
+- `strictHttpMethods`: when `true`, methods outside Node's supported method set
+  receive `400 Unsupported HTTP method` before routing. Defaults to `false`.
+- `strictJsonContentType`: when `true`, `request.json()` requires a JSON media
+  type for non-empty bodies. Defaults to `false`.
 - `trustProxy`: when `true`, `ctx.ip` may use `cf-connecting-ip` and
   `x-forwarded-for`. Defaults to `false`, so `ctx.ip` uses the socket address.
 - `securityHeaders`: custom values or `false` for the security headers described
@@ -118,3 +131,7 @@ Omitted entries keep their documented defaults. The framework applies the
 resolved values before route handlers run, so application code can still
 overwrite them with `ctx.set()` or `ctx.res.setHeader()` before the response is
 sent.
+
+Content Security Policy is not included in this global set. Use
+`fallbackContentSecurityPolicy` to protect only framework-generated fallback
+responses without constraining application HTML or asset routes.

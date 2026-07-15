@@ -35,6 +35,19 @@ app.route("/limited").post(async (ctx) => {
 // A large body → 413, next request on the same connection succeeds
 ```
 
+To stop reading an oversized or unbounded body instead, opt in to the close
+strategy:
+
+```ts
+const app = createApp({ oversizedBodyStrategy: "close" });
+```
+
+For HTTP/1, the 413 response includes `Connection: close`. For HTTP/2, only the
+request stream is closed; no connection-specific header is sent, and the
+session remains usable for other streams. If response headers were already
+sent when the limit is crossed, the response is destroyed because a 413 can no
+longer be written safely.
+
 ## request.json(limit?)
 
 Convenience wrapper around `buffer()` that `JSON.parse`s the result. Throws a
@@ -79,8 +92,10 @@ Returns the matched type string, `false` if no match, or `null` when no
 ## Expect: 100-continue
 
 When the client sends `Expect: 100-continue`, calling `buffer()` automatically
-calls `res.writeContinue()` before reading the body. This allows the client to
-proceed with sending the body.
+calls `res.writeContinue()` before reading the body. In `"close"` mode, a
+`Content-Length` that already exceeds the limit receives the final 413 without
+an interim 100 response. Requests whose size is not known in advance still
+receive 100 Continue and are closed if the streamed body crosses the limit.
 
 ```ts
 app.route("/large-upload").post(async (ctx) => {

@@ -69,6 +69,16 @@ describe("ensureFallbackHeaders", () => {
     expect(res.getHeader("Content-Type")).toBe("application/json");
     expect(res.getHeader("X-Frame-Options")).toBe("DENY");
   });
+
+  it("adds an enabled fallback CSP without overwriting an existing value", () => {
+    const res = makeMockRes();
+    ensureFallbackHeaders(res, undefined, "default-src 'none'");
+    expect(res.getHeader("Content-Security-Policy")).toBe("default-src 'none'");
+
+    res.setHeader("Content-Security-Policy", "default-src 'self'");
+    ensureFallbackHeaders(res, undefined, "default-src 'none'");
+    expect(res.getHeader("Content-Security-Policy")).toBe("default-src 'self'");
+  });
 });
 
 describe("resolveSecurityHeaders", () => {
