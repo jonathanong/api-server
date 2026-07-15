@@ -46,21 +46,6 @@ jobs:
               return bodyMatches.some(match => isMajorBump(match[1], match[2]));
             }
 
-            function hasActiveApproval(reviews) {
-              const latestStateByUser = new Map();
-              const sortedReviews = [...reviews].sort((a, b) => {
-                return new Date(a.submitted_at ?? 0).getTime() - new Date(b.submitted_at ?? 0).getTime();
-              });
-
-              for (const review of sortedReviews) {
-                if (review.user) {
-                  latestStateByUser.set(review.user.login, review.state);
-                }
-              }
-
-              return [...latestStateByUser.values()].includes('APPROVED');
-            }
-
             core.info(`Evaluating PR #${pr.number} (${pr.title})`);
 
             if (pr.draft) {
@@ -71,25 +56,6 @@ jobs:
             if (hasMajorBump(pr)) {
               core.info('Skipping semver-major update');
               return;
-            }
-
-            const { data: reviews } = await github.rest.pulls.listReviews({
-              owner,
-              repo,
-              pull_number: pr.number,
-              per_page: 100,
-            });
-
-            if (hasActiveApproval(reviews)) {
-              core.info('Approval already present');
-            } else {
-              core.info('Approving PR');
-              await github.rest.pulls.createReview({
-                owner,
-                repo,
-                pull_number: pr.number,
-                event: 'APPROVE',
-              });
             }
 
             const { data: freshPr } = await github.rest.pulls.get({
