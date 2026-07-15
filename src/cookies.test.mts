@@ -53,6 +53,14 @@ describe("Cookies", () => {
     expect(String(header)).toContain("token=mytoken");
   });
 
+  it("set(name, value) preserves URL-encoded cookie values", () => {
+    const req = makeReq();
+    const res = makeRes();
+    const cookies = new Cookies(req, res);
+    cookies.set("token", "a:b/c");
+    expect(res._headers["set-cookie"]).toBe("token=a%3Ab%2Fc");
+  });
+
   it("set with httpOnly option", () => {
     const req = makeReq();
     const res = makeRes();

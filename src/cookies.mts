@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { parse, serialize } from "cookie";
+import { parseCookie, stringifySetCookie } from "cookie";
 import type { CookieOptions } from "./types.mts";
 
 export class Cookies {
@@ -15,14 +15,14 @@ export class Cookies {
   get(name: string): string | undefined {
     if (!this.parsed) {
       const header = this.req.headers.cookie ?? "";
-      this.parsed = parse(header);
+      this.parsed = parseCookie(header);
     }
-    return this.parsed[name];
+    return this.parsed?.[name];
   }
 
   set(name: string, value: string, opts?: CookieOptions): void {
     const existing = this.res.getHeader("Set-Cookie");
-    const serialized = serialize(name, value, opts);
+    const serialized = stringifySetCookie({ name, value, ...opts }, { encode: encodeURIComponent });
     if (Array.isArray(existing)) {
       this.res.setHeader("Set-Cookie", [...existing, serialized]);
     } else if (existing) {
