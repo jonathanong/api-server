@@ -387,6 +387,7 @@ describe("Context", () => {
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
+      once: () => mockRes,
       setHeader: (n: string, v: string | number) => {
         headers[n.toLowerCase()] = v;
       },

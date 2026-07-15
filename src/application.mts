@@ -99,7 +99,7 @@ export class Application extends EventEmitter {
     const timing = new ServerTiming();
     const ContextClass = this.contextClass;
 
-    req.on("close", () => {
+    res.once("close", () => {
       if (!res.writableEnded) {
         abortController.abort();
       }
