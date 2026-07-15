@@ -34,9 +34,9 @@ export class Application extends EventEmitter {
   private readonly securityHeaders: ResolvedSecurityHeaders;
   private trustProxy: boolean;
   private strictJsonContentType: boolean;
-  private oversizedBodyStrategy: OversizedBodyStrategy;
-  private fallbackContentSecurityPolicy: string | false;
-  private strictHttpMethods: boolean;
+  private readonly oversizedBodyStrategy: OversizedBodyStrategy;
+  private readonly fallbackContentSecurityPolicy: string | false;
+  private readonly strictHttpMethods: boolean;
 
   constructor(options?: ApplicationOptions) {
     super();

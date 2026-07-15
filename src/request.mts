@@ -13,7 +13,7 @@ export class Request {
   private bodyPromise: Promise<Buffer> | null = null;
   private defaultLimit: string | number | false;
   private strictJsonContentType: boolean;
-  private oversizedBodyStrategy: OversizedBodyStrategy;
+  private readonly oversizedBodyStrategy: OversizedBodyStrategy;
 
   constructor(
     req: IncomingMessage,
