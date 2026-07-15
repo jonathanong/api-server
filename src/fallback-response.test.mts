@@ -49,9 +49,11 @@ describe("ensureFallbackHeaders", () => {
     const res = makeMockRes();
     res.setHeader("Content-Type", "application/json");
     res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("Content-Security-Policy", "default-src 'self'");
     ensureFallbackHeaders(res);
     expect(res.getHeader("Content-Type")).toBe("application/json");
     expect(res.getHeader("X-Frame-Options")).toBe("DENY");
+    expect(res.getHeader("Content-Security-Policy")).toBe("default-src 'self'");
   });
 });
 

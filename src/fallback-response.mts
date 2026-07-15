@@ -13,7 +13,6 @@ export const SECURITY_HEADERS = {
   "X-DNS-Prefetch-Control": "off",
   "X-Download-Options": "noopen",
   "X-Permitted-Cross-Domain-Policies": "none",
-  "Content-Security-Policy": "default-src 'none'",
 } as const;
 const FALLBACK_HEADERS = {
   "Content-Type": TEXT_PLAIN_CONTENT_TYPE,
@@ -21,6 +20,12 @@ const FALLBACK_HEADERS = {
 } as const;
 
 export function ensureFallbackHeaders(res: ServerResponse): void {
+  try {
+    if (typeof res.hasHeader !== "function" || !res.hasHeader("Content-Security-Policy")) {
+      res.setHeader("Content-Security-Policy", "default-src 'none'");
+    }
+  } catch {}
+
   for (const [name, value] of Object.entries(FALLBACK_HEADERS)) {
     try {
       if (typeof res.hasHeader !== "function" || !res.hasHeader(name)) {
