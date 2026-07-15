@@ -2,3 +2,7 @@
 **Vulnerability:** Node's `new URL(url)` throws a synchronous error for malformed URLs (e.g. `http://[/foo`). If `req.url` contains an absolute URL and is parsed without a try-catch, it throws an uncaught exception during request handling, resulting in an unhandled 500 Internal Server Error rather than a 400 Bad Request.
 **Learning:** `req.url` can be arbitrary user input, and when evaluating it as an absolute URL, standard library parsers (like `URL`) are strict and throw. Unhandled throws early in request routing logic cause 500s, polluting error logs and creating a vector for DoS via noise/alert fatigue.
 **Prevention:** Always wrap `new URL()` in a `try-catch` when operating on `req.url`, and re-throw with `{ status: 400 }` to ensure malformed requests are properly rejected without causing server-side exceptions.
+## 2026-06-02 - [CSP Global Header Side Effects]
+**Vulnerability:** Adding a blanket Content-Security-Policy (CSP) to the default fallback headers.
+**Learning:** Adding a restrictive CSP header to all fallback responses (or all application responses globally) can unexpectedly break downstream HTML applications relying on inline scripts or unconfigured domains. Security fixes must not break existing functionality.
+**Prevention:** CSP enhancements should be implemented as an opt-in feature or carefully designed to only apply when safe (e.g. only on explicit fallback 500s where HTML rendering is not expected), rather than universally injected into all responses.
