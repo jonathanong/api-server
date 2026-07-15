@@ -30,7 +30,7 @@ export class Application extends EventEmitter {
   private contextClass: typeof Context = Context;
   private logger: Logger;
   private bodyLimit: string | number | false;
-  private securityHeaders: ResolvedSecurityHeaders;
+  private readonly securityHeaders: ResolvedSecurityHeaders;
   private trustProxy: boolean;
   private strictJsonContentType: boolean;
 
