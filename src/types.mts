@@ -12,6 +12,8 @@ export type SecurityHeaderName =
 
 export type SecurityHeadersOptions = Partial<Record<SecurityHeaderName, string | false>>;
 
+export type OversizedBodyStrategy = "drain" | "close";
+
 export interface CookieOptions {
   httpOnly?: boolean;
   secure?: boolean;
@@ -24,9 +26,15 @@ export interface CookieOptions {
 
 export interface ApplicationOptions {
   bodyLimit?: string | number | false;
+  /** Defaults to "drain", preserving HTTP keep-alive after a 413 response. */
+  oversizedBodyStrategy?: OversizedBodyStrategy;
+  /** Applied only to framework-generated fallback responses. Defaults to false. */
+  fallbackContentSecurityPolicy?: string | false;
   logger?: LoggerOptions;
   securityHeaders?: SecurityHeadersOptions;
   trustProxy?: boolean;
+  /** Reject methods outside node:http.METHODS with 400. Defaults to false. */
+  strictHttpMethods?: boolean;
   /**
    * When true, ctx.request.json() rejects requests whose Content-Type is not
    * application/json (or a compatible JSON subtype such as application/merge-patch+json)

@@ -2,11 +2,12 @@ import { EventEmitter } from "node:events";
 import type { IncomingMessage, ServerResponse, RequestListener } from "node:http";
 import type { AsyncLocalStorage } from "node:async_hooks";
 import { Context, createContextClass } from "./context.mts";
-import { createRouteBuilder, type RouteBuilder } from "./router.mts";
+import { createRouteBuilder, isSupportedHttpMethod, type RouteBuilder } from "./router.mts";
 import Router from "find-my-way";
 import { ServerTiming } from "./server-timing.mts";
 import { Logger } from "./logger.mts";
-import type { ApplicationOptions } from "./types.mts";
+import type { ApplicationOptions, OversizedBodyStrategy } from "./types.mts";
+import { getRawPath } from "./request-path.mts";
 import {
   applySecurityHeaders,
   ensureFallbackHeaders,
@@ -33,6 +34,9 @@ export class Application extends EventEmitter {
   private readonly securityHeaders: ResolvedSecurityHeaders;
   private trustProxy: boolean;
   private strictJsonContentType: boolean;
+  private oversizedBodyStrategy: OversizedBodyStrategy;
+  private fallbackContentSecurityPolicy: string | false;
+  private strictHttpMethods: boolean;
 
   constructor(options?: ApplicationOptions) {
     super();
@@ -41,6 +45,9 @@ export class Application extends EventEmitter {
     this.securityHeaders = resolveSecurityHeaders(options?.securityHeaders);
     this.trustProxy = options?.trustProxy ?? false;
     this.strictJsonContentType = options?.strictJsonContentType ?? false;
+    this.oversizedBodyStrategy = options?.oversizedBodyStrategy ?? "drain";
+    this.fallbackContentSecurityPolicy = options?.fallbackContentSecurityPolicy ?? false;
+    this.strictHttpMethods = options?.strictHttpMethods ?? false;
   }
 
   route(path: string): RouteBuilder {
@@ -85,7 +92,7 @@ export class Application extends EventEmitter {
           // Swallow listener throws so the 500 response still goes out.
         }
         if (!res.headersSent) {
-          ensureFallbackHeaders(res, this.securityHeaders);
+          ensureFallbackHeaders(res, this.securityHeaders, this.fallbackContentSecurityPolicy);
           res.writeHead(500);
           res.end("Internal Server Error");
         }
@@ -122,12 +129,16 @@ export class Application extends EventEmitter {
       this.trustProxy,
       onWriteHead,
       this.strictJsonContentType,
+      this.oversizedBodyStrategy,
     );
 
     applySecurityHeaders(res, this.securityHeaders);
 
     try {
       const method = req.method ?? "GET";
+      if (this.strictHttpMethods && !isSupportedHttpMethod(method)) {
+        throw Object.assign(new Error("Unsupported HTTP method"), { status: 400 });
+      }
       const url = req.url ?? "/";
       const rawPath = getRawPath(url);
       const routePath = rawPath.replace(/^\/+/, "/") || "/";
@@ -143,7 +154,7 @@ export class Application extends EventEmitter {
         if (this.notFoundHandlerFn) {
           await this.notFoundHandlerFn(ctx);
         } else {
-          ensureFallbackHeaders(res, this.securityHeaders);
+          ensureFallbackHeaders(res, this.securityHeaders, this.fallbackContentSecurityPolicy);
           res.writeHead(404);
           res.end("Not Found");
         }
@@ -169,11 +180,11 @@ export class Application extends EventEmitter {
         // registered error handler threw or returned without sending one. Without
         // this, requests hang until the socket times out (issue #1948).
         if (!res.headersSent) {
-          sendFallback(res, this.securityHeaders);
+          sendFallback(res, this.securityHeaders, this.fallbackContentSecurityPolicy);
         }
       } else if (!res.headersSent) {
         const status = getFallbackStatus(error);
-        ensureFallbackHeaders(res, this.securityHeaders);
+        ensureFallbackHeaders(res, this.securityHeaders, this.fallbackContentSecurityPolicy);
         res.writeHead(status);
         res.end(getFallbackBody(error, status));
       }
@@ -181,17 +192,6 @@ export class Application extends EventEmitter {
       onFinish(res.statusCode);
     }
   }
-}
-function getRawPath(url: string): string {
-  const lower = url.slice(0, 8).toLowerCase();
-  if (lower.startsWith("http://") || lower.startsWith("https://")) {
-    try {
-      return new URL(url).pathname;
-    } catch {
-      throw Object.assign(new Error("Invalid URL"), { status: 400 });
-    }
-  }
-  return url.split("?")[0];
 }
 
 export const createApp = (options?: ApplicationOptions): Application => new Application(options);

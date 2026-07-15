@@ -14,6 +14,7 @@ export type { Handler, RouteBuilder } from "./router.mts";
 export type {
   CookieOptions,
   ApplicationOptions,
+  OversizedBodyStrategy,
   SecurityHeaderName,
   SecurityHeadersOptions,
 } from "./types.mts";
