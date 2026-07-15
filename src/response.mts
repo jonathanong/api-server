@@ -3,6 +3,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { generateETag, isFresh } from "./etag.mts";
 import { shouldCompress, createCompressStream, compressSync } from "./compression.mts";
 import type { ServerTiming } from "./server-timing.mts";
+import { mergeVary } from "./vary.mts";
 
 export class Response {
   private req: IncomingMessage;
@@ -70,7 +71,7 @@ export class Response {
 
     if (encoding) {
       this.res.setHeader("Content-Encoding", encoding);
-      this.res.setHeader("Vary", "Accept-Encoding");
+      this.res.setHeader("Vary", mergeVary(this.res.getHeader("Vary")));
     }
 
     // HEAD requests: send headers only, no body
@@ -131,7 +132,7 @@ export class Response {
     if (encoding) {
       finalBody = compressSync(encoding, body);
       this.res.setHeader("Content-Encoding", encoding);
-      this.res.setHeader("Vary", "Accept-Encoding");
+      this.res.setHeader("Vary", mergeVary(this.res.getHeader("Vary")));
     }
 
     this.res.setHeader("Content-Type", contentType);

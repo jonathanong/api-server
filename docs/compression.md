@@ -67,6 +67,11 @@ Content-Encoding: gzip   (or br, deflate)
 Vary: Accept-Encoding
 ```
 
+An existing `Vary` header is preserved and `Accept-Encoding` is merged into it.
+Members are deduplicated case-insensitively without changing their first spelling
+or order. A wildcard `Vary: *` remains a wildcard. If compression is skipped,
+the framework does not modify `Vary`.
+
 `Content-Length` reflects the compressed size for buffered responses.
 
 ## Test example

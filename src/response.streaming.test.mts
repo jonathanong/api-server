@@ -46,6 +46,7 @@ describe("Streaming", () => {
     const app = new Application();
     app.route("/compressed").get(async (ctx) => {
       ctx.res.setHeader("Content-Type", "text/plain");
+      ctx.res.setHeader("Vary", ["Origin, Accept-Language", "origin"]);
       const large = "x".repeat(2000);
       await ctx.pipeline(createReadable(large));
     });
@@ -57,7 +58,7 @@ describe("Streaming", () => {
         .buffer(true);
       // Should have received compressed data
       expect(res.headers["content-encoding"]).toBe("gzip");
-      expect(res.headers["vary"]).toContain("Accept-Encoding");
+      expect(res.headers["vary"]).toBe("Origin, Accept-Language, Accept-Encoding");
     });
   });
 
