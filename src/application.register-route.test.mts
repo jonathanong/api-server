@@ -119,6 +119,7 @@ describe("Application", () => {
         headersSent: false,
         writableEnded: false,
         statusCode: 200,
+        once: () => mockRes,
         setHeader: (name: string, value: string | number) => {
           headers[name.toLowerCase()] = value;
         },
@@ -161,6 +162,7 @@ describe("Application", () => {
         headersSent: false,
         writableEnded: false,
         statusCode: 200,
+        once: () => mockRes,
         setHeader: (name: string, value: string | number) => {
           headers[name.toLowerCase()] = value;
         },
@@ -307,6 +309,7 @@ describe("Application", () => {
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
+      once: () => mockRes,
       setHeader: () => {},
       getHeader: () => undefined,
       writeHead: (status: number) => {
@@ -349,6 +352,7 @@ describe("Application", () => {
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
+      once: () => mockRes,
       setHeader: (n: string, v: string | number) => {
         headers[n.toLowerCase()] = v;
       },
@@ -383,6 +387,7 @@ describe("Application", () => {
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
+      once: () => mockRes,
       setHeader: (n: string, v: string | number) => {
         headers[n.toLowerCase()] = v;
       },
@@ -430,6 +435,7 @@ describe("Application", () => {
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
+      once: () => mockRes,
       setHeader: (n: string, v: string | number) => {
         headers[n.toLowerCase()] = v;
       },
@@ -465,6 +471,7 @@ describe("Application", () => {
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
+      once: () => mockRes,
       setHeader: (n: string, v: string | number) => {
         headers[n.toLowerCase()] = v;
       },
@@ -503,6 +510,7 @@ describe("Application", () => {
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
+      once: () => mockRes,
       setHeader: () => {},
       getHeader: () => undefined,
       writeHead: (s: number) => {
@@ -538,6 +546,7 @@ describe("Application", () => {
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
+      once: () => mockResInner,
       setHeader: () => {},
       getHeader: () => undefined,
       writeHead(s: number) {

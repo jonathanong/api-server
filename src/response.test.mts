@@ -132,6 +132,7 @@ describe("Response", () => {
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
+      once: () => mockRes,
       setHeader: () => {},
       getHeader: () => undefined,
       writeHead: (status: number) => {
@@ -181,6 +182,7 @@ describe("Response", () => {
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
+      once: () => mockRes,
       setHeader: () => {},
       getHeader: () => undefined,
       writeHead: (status: number) => {
@@ -319,6 +321,7 @@ describe("Response", () => {
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
+      once: () => mockRes,
       setHeader: () => {},
       getHeader: () => undefined,
       writeHead: (s: number) => {

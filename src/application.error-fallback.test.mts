@@ -20,6 +20,7 @@ interface MockRes {
   statusCode: number;
   headersSent: boolean;
   chunks: string[];
+  once: () => MockRes;
   end: (data?: Buffer | string) => void;
 }
 
@@ -37,6 +38,7 @@ function makeMockReqRes(url: string): [import("node:http").IncomingMessage, Mock
     headersSent: false,
     statusCode: 200,
     chunks,
+    once: () => mockRes,
     end: (data?: Buffer | string) => {
       if (data) chunks.push(Buffer.isBuffer(data) ? data.toString() : String(data));
     },
@@ -223,6 +225,7 @@ describe("Application outer safety-net (handleRequest catch)", () => {
       writableEnded: false,
       statusCode: 200,
       body: "",
+      once: () => mockRes,
       setHeader: () => {
         throw throwValue;
       },

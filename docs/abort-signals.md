@@ -1,7 +1,8 @@
 # Abort Signals
 
-Each request gets a dedicated `AbortController`. The controller is aborted
-automatically when the client disconnects before the response is finished.
+Each request gets a dedicated `AbortController`. Its signal remains active
+after the request body has been consumed and is aborted automatically when the
+client disconnects before the response is finished.
 
 ## ctx.signal
 
@@ -37,10 +38,23 @@ app.route("/test").get((ctx) => {
 
 ## Client-disconnect propagation
 
-The framework listens for the `'close'` event on the raw request socket. When
-the socket closes before `res.writableEnded` is true, `abortController.abort()`
-is called. This means `ctx.signal.aborted` becomes `true` and any code
-awaiting the signal is notified.
+The framework listens for the `'close'` event on the raw response. When the
+response closes before `res.writableEnded` is true, `abortController.abort()`
+is called. This means `ctx.signal.aborted` becomes `true` and any code awaiting
+the signal is notified.
+
+Reading a request body to completion also closes the request-side stream. That
+does not abort `ctx.signal`; a POST handler can consume JSON and then keep a
+streaming response open with the same signal. A normally completed response
+also leaves the signal un-aborted because `res.writableEnded` is already true
+when its `'close'` event fires.
+
+## Server shutdown
+
+Force-closing an active connection, for example with
+`server.closeAllConnections()`, closes its unfinished response and aborts the
+signal. Calling `server.close()` alone does not abort active responses; it waits
+for them to finish or for their connections to close.
 
 ## Checking abort status
 
