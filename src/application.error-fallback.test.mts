@@ -87,7 +87,12 @@ describe("Application error fallback (#1948)", () => {
   });
 
   it("error handler that returns without sending a response sends a 500 fallback", async () => {
-    const app = new Application();
+    const app = new Application({
+      securityHeaders: {
+        "X-Frame-Options": false,
+        "Strict-Transport-Security": "max-age=31536000",
+      },
+    });
     app.errorHandler(() => {
       // returns without calling ctx.json or ctx.setStatus
     });
@@ -107,6 +112,9 @@ describe("Application error fallback (#1948)", () => {
 
     expect(mockRes.statusCode).toBe(500);
     expect(mockRes.chunks.join("")).toBe("Internal Server Error");
+    const serverResponse = mockRes as unknown as import("node:http").ServerResponse;
+    expect(serverResponse.getHeader("X-Frame-Options")).toBeUndefined();
+    expect(serverResponse.getHeader("Strict-Transport-Security")).toBe("max-age=31536000");
   });
 
   it("async error handler that rejects sends a 500 fallback", async () => {
@@ -145,6 +153,30 @@ describe("Application error fallback (#1948)", () => {
       expect(res.text).toBe("Internal Server Error");
       expect(res.headers["content-type"]).toBe("text/plain; charset=utf-8");
       expect(res.headers["x-content-type-options"]).toBe("nosniff");
+      expect(res.headers["strict-transport-security"]).toBeUndefined();
+    });
+  });
+
+  it("uses configured headers without overwriting handler-set values on error fallback", async () => {
+    const app = new Application({
+      securityHeaders: {
+        "X-XSS-Protection": "framework-value",
+        "X-Frame-Options": false,
+        "Strict-Transport-Security": "max-age=31536000",
+      },
+    });
+    app.route("/configured-error").get((ctx) => {
+      ctx.set("X-XSS-Protection", "handler-value");
+      throw new Error("boom");
+    });
+
+    await withServer(app.callback(), async (server) => {
+      const res = await request(server).get("/configured-error");
+      expect(res.status).toBe(500);
+      expect(res.headers["x-xss-protection"]).toBe("handler-value");
+      expect(res.headers["x-frame-options"]).toBeUndefined();
+      expect(res.headers["x-content-type-options"]).toBe("nosniff");
+      expect(res.headers["strict-transport-security"]).toBe("max-age=31536000");
     });
   });
 
@@ -241,6 +273,44 @@ describe("Application outer safety-net (handleRequest catch)", () => {
     return [mockReq, mockRes];
   }
 
+  function makeFailOnceReqRes(): [
+    import("node:http").IncomingMessage,
+    import("node:http").ServerResponse & { statusCode: number; body: string },
+    Record<string, string | number>,
+  ] {
+    const mockReq = {
+      method: "GET",
+      url: "/test",
+      headers: {},
+      socket: {},
+      on: (_e: string, _h: () => void) => mockReq,
+    } as unknown as import("node:http").IncomingMessage;
+    const headers: Record<string, string | number> = {};
+    let failNextHeader = true;
+    const mockRes = {
+      headersSent: false,
+      writableEnded: false,
+      statusCode: 200,
+      body: "",
+      setHeader: (name: string, value: string | number) => {
+        if (failNextHeader) {
+          failNextHeader = false;
+          throw new Error("setup error");
+        }
+        headers[name.toLowerCase()] = value;
+      },
+      getHeader: (name: string) => headers[name.toLowerCase()],
+      hasHeader: (name: string) => name.toLowerCase() in headers,
+      writeHead: (status: number) => {
+        mockRes.statusCode = status;
+      },
+      end: (data?: string) => {
+        if (data) mockRes.body = data;
+      },
+    } as unknown as import("node:http").ServerResponse & { statusCode: number; body: string };
+    return [mockReq, mockRes, headers];
+  }
+
   it("sends 500 when runRequest throws before its try block", async () => {
     const app = new Application();
     const [mockReq, mockRes] = makeThrowingReqRes(new Error("setup error"));
@@ -254,6 +324,29 @@ describe("Application outer safety-net (handleRequest catch)", () => {
     });
     expect(mockRes.statusCode).toBe(500);
     expect(mockRes.body).toBe("Internal Server Error");
+  });
+
+  it("uses configured security headers when the outer safety-net sends the response", async () => {
+    const app = new Application({
+      securityHeaders: {
+        "X-XSS-Protection": false,
+        "Strict-Transport-Security": "max-age=31536000",
+      },
+    });
+    const [mockReq, mockRes, headers] = makeFailOnceReqRes();
+    await new Promise<void>((resolve) => {
+      const origEnd = mockRes.end.bind(mockRes);
+      (mockRes as unknown as Record<string, unknown>).end = (data?: string) => {
+        origEnd(data);
+        resolve();
+      };
+      app.callback()(mockReq, mockRes);
+    });
+    expect(mockRes.statusCode).toBe(500);
+    expect(headers["x-xss-protection"]).toBeUndefined();
+    expect(headers["x-frame-options"]).toBe("SAMEORIGIN");
+    expect(headers["x-content-type-options"]).toBe("nosniff");
+    expect(headers["strict-transport-security"]).toBe("max-age=31536000");
   });
 
   it("wraps non-Error thrown value into an Error, gracefully handling null prototype objects", async () => {

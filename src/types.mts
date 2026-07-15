@@ -1,5 +1,17 @@
 import type { LoggerOptions } from "./logger.mts";
 
+export type SecurityHeaderName =
+  | "X-XSS-Protection"
+  | "X-Frame-Options"
+  | "X-Content-Type-Options"
+  | "Strict-Transport-Security"
+  | "Referrer-Policy"
+  | "X-DNS-Prefetch-Control"
+  | "X-Download-Options"
+  | "X-Permitted-Cross-Domain-Policies";
+
+export type SecurityHeadersOptions = Partial<Record<SecurityHeaderName, string | false>>;
+
 export interface CookieOptions {
   httpOnly?: boolean;
   secure?: boolean;
@@ -13,6 +25,7 @@ export interface CookieOptions {
 export interface ApplicationOptions {
   bodyLimit?: string | number | false;
   logger?: LoggerOptions;
+  securityHeaders?: SecurityHeadersOptions;
   trustProxy?: boolean;
   /**
    * When true, ctx.request.json() rejects requests whose Content-Type is not

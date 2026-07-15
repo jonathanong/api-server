@@ -8,12 +8,14 @@ import { ServerTiming } from "./server-timing.mts";
 import { Logger } from "./logger.mts";
 import type { ApplicationOptions } from "./types.mts";
 import {
+  applySecurityHeaders,
   ensureFallbackHeaders,
   getFallbackBody,
   getFallbackStatus,
+  resolveSecurityHeaders,
   safeString,
   sendFallback,
-  SECURITY_HEADERS,
+  type ResolvedSecurityHeaders,
 } from "./fallback-response.mts";
 
 export type ErrorHandler = (ctx: Context, error: Error) => Promise<void> | void;
@@ -28,6 +30,7 @@ export class Application extends EventEmitter {
   private contextClass: typeof Context = Context;
   private logger: Logger;
   private bodyLimit: string | number | false;
+  private readonly securityHeaders: ResolvedSecurityHeaders;
   private trustProxy: boolean;
   private strictJsonContentType: boolean;
 
@@ -35,6 +38,7 @@ export class Application extends EventEmitter {
     super();
     this.logger = new Logger(options?.logger);
     this.bodyLimit = options?.bodyLimit ?? "1mb";
+    this.securityHeaders = resolveSecurityHeaders(options?.securityHeaders);
     this.trustProxy = options?.trustProxy ?? false;
     this.strictJsonContentType = options?.strictJsonContentType ?? false;
   }
@@ -81,7 +85,7 @@ export class Application extends EventEmitter {
           // Swallow listener throws so the 500 response still goes out.
         }
         if (!res.headersSent) {
-          ensureFallbackHeaders(res);
+          ensureFallbackHeaders(res, this.securityHeaders);
           res.writeHead(500);
           res.end("Internal Server Error");
         }
@@ -120,10 +124,7 @@ export class Application extends EventEmitter {
       this.strictJsonContentType,
     );
 
-    // Security headers
-    for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
-      res.setHeader(name, value);
-    }
+    applySecurityHeaders(res, this.securityHeaders);
 
     try {
       const method = req.method ?? "GET";
@@ -142,7 +143,7 @@ export class Application extends EventEmitter {
         if (this.notFoundHandlerFn) {
           await this.notFoundHandlerFn(ctx);
         } else {
-          ensureFallbackHeaders(res);
+          ensureFallbackHeaders(res, this.securityHeaders);
           res.writeHead(404);
           res.end("Not Found");
         }
@@ -168,11 +169,11 @@ export class Application extends EventEmitter {
         // registered error handler threw or returned without sending one. Without
         // this, requests hang until the socket times out (issue #1948).
         if (!res.headersSent) {
-          sendFallback(res);
+          sendFallback(res, this.securityHeaders);
         }
       } else if (!res.headersSent) {
         const status = getFallbackStatus(error);
-        ensureFallbackHeaders(res);
+        ensureFallbackHeaders(res, this.securityHeaders);
         res.writeHead(status);
         res.end(getFallbackBody(error, status));
       }

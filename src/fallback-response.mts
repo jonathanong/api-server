@@ -1,26 +1,59 @@
 import { type ServerResponse, STATUS_CODES } from "node:http";
+import type { SecurityHeaderName, SecurityHeadersOptions } from "./types.mts";
 
 const FALLBACK_BODY = "Not Found";
 const ERROR_STATUS = 500;
 const ERROR_BODY = "Internal Server Error";
 const TEXT_PLAIN_CONTENT_TYPE = "text/plain; charset=utf-8";
-export const SECURITY_HEADERS = {
+export type ResolvedSecurityHeaders = Readonly<Partial<Record<SecurityHeaderName, string>>>;
+
+const SECURITY_HEADER_NAMES = [
+  "X-XSS-Protection",
+  "X-Frame-Options",
+  "X-Content-Type-Options",
+  "Strict-Transport-Security",
+  "Referrer-Policy",
+  "X-DNS-Prefetch-Control",
+  "X-Download-Options",
+  "X-Permitted-Cross-Domain-Policies",
+] as const satisfies readonly SecurityHeaderName[];
+
+export const SECURITY_HEADERS: ResolvedSecurityHeaders = {
   "X-XSS-Protection": "0",
   "X-Frame-Options": "SAMEORIGIN",
   "X-Content-Type-Options": "nosniff",
-  "Strict-Transport-Security": "max-age=15552000; includeSubDomains",
-  "Referrer-Policy": "no-referrer",
-  "X-DNS-Prefetch-Control": "off",
-  "X-Download-Options": "noopen",
-  "X-Permitted-Cross-Domain-Policies": "none",
-} as const;
-const FALLBACK_HEADERS = {
-  "Content-Type": TEXT_PLAIN_CONTENT_TYPE,
-  ...SECURITY_HEADERS,
-} as const;
+};
 
-export function ensureFallbackHeaders(res: ServerResponse): void {
-  for (const [name, value] of Object.entries(FALLBACK_HEADERS)) {
+export function resolveSecurityHeaders(options?: SecurityHeadersOptions): ResolvedSecurityHeaders {
+  const resolved: Partial<Record<SecurityHeaderName, string>> = { ...SECURITY_HEADERS };
+  for (const name of SECURITY_HEADER_NAMES) {
+    const value = options?.[name];
+    if (value === false) {
+      delete resolved[name];
+    } else if (typeof value === "string") {
+      resolved[name] = value;
+    }
+  }
+  return resolved;
+}
+
+export function applySecurityHeaders(
+  res: ServerResponse,
+  securityHeaders: ResolvedSecurityHeaders,
+): void {
+  for (const [name, value] of Object.entries(securityHeaders)) {
+    res.setHeader(name, value);
+  }
+}
+
+export function ensureFallbackHeaders(
+  res: ServerResponse,
+  securityHeaders: ResolvedSecurityHeaders = SECURITY_HEADERS,
+): void {
+  for (const [name, value] of Object.entries({
+    "Content-Type": TEXT_PLAIN_CONTENT_TYPE,
+    ...securityHeaders,
+  })) {
     try {
       if (typeof res.hasHeader !== "function" || !res.hasHeader(name)) {
         res.setHeader(name, value);
@@ -31,9 +64,12 @@ export function ensureFallbackHeaders(res: ServerResponse): void {
   }
 }
 
-export function sendFallback(res: ServerResponse): void {
+export function sendFallback(
+  res: ServerResponse,
+  securityHeaders: ResolvedSecurityHeaders = SECURITY_HEADERS,
+): void {
   try {
-    ensureFallbackHeaders(res);
+    ensureFallbackHeaders(res, securityHeaders);
     res.writeHead(ERROR_STATUS);
     res.end(ERROR_BODY);
   } catch {

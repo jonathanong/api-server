@@ -4,8 +4,25 @@ import {
   sendFallback,
   getFallbackBody,
   getFallbackStatus,
+  resolveSecurityHeaders,
 } from "./fallback-response.mts";
 import type { ServerResponse } from "node:http";
+import type { SecurityHeaderName, SecurityHeadersOptions } from "./types.mts";
+
+const SECURITY_HEADER_NAMES = [
+  "X-XSS-Protection",
+  "X-Frame-Options",
+  "X-Content-Type-Options",
+  "Strict-Transport-Security",
+  "Referrer-Policy",
+  "X-DNS-Prefetch-Control",
+  "X-Download-Options",
+  "X-Permitted-Cross-Domain-Policies",
+] as const satisfies readonly SecurityHeaderName[];
+
+const CUSTOM_SECURITY_HEADERS = Object.fromEntries(
+  SECURITY_HEADER_NAMES.map((name) => [name, `custom-${name}`]),
+) as Record<SecurityHeaderName, string>;
 
 describe("sendFallback", () => {
   it("sends 500 Internal Server Error", () => {
@@ -15,7 +32,7 @@ describe("sendFallback", () => {
     expect(res.body).toBe("Internal Server Error");
     expect(res.getHeader("Content-Type")).toBe("text/plain; charset=utf-8");
     expect(res.getHeader("X-Content-Type-Options")).toBe("nosniff");
-    expect(res.getHeader("Strict-Transport-Security")).toBe("max-age=15552000; includeSubDomains");
+    expect(res.getHeader("Strict-Transport-Security")).toBeUndefined();
   });
 
   it("does not throw if socket is destroyed", () => {
@@ -37,11 +54,11 @@ describe("ensureFallbackHeaders", () => {
     expect(res.getHeader("X-XSS-Protection")).toBe("0");
     expect(res.getHeader("X-Frame-Options")).toBe("SAMEORIGIN");
     expect(res.getHeader("X-Content-Type-Options")).toBe("nosniff");
-    expect(res.getHeader("Strict-Transport-Security")).toBe("max-age=15552000; includeSubDomains");
-    expect(res.getHeader("Referrer-Policy")).toBe("no-referrer");
-    expect(res.getHeader("X-DNS-Prefetch-Control")).toBe("off");
-    expect(res.getHeader("X-Download-Options")).toBe("noopen");
-    expect(res.getHeader("X-Permitted-Cross-Domain-Policies")).toBe("none");
+    expect(res.getHeader("Strict-Transport-Security")).toBeUndefined();
+    expect(res.getHeader("Referrer-Policy")).toBeUndefined();
+    expect(res.getHeader("X-DNS-Prefetch-Control")).toBeUndefined();
+    expect(res.getHeader("X-Download-Options")).toBeUndefined();
+    expect(res.getHeader("X-Permitted-Cross-Domain-Policies")).toBeUndefined();
   });
 
   it("does not overwrite existing headers", () => {
@@ -51,6 +68,43 @@ describe("ensureFallbackHeaders", () => {
     ensureFallbackHeaders(res);
     expect(res.getHeader("Content-Type")).toBe("application/json");
     expect(res.getHeader("X-Frame-Options")).toBe("DENY");
+  });
+});
+
+describe("resolveSecurityHeaders", () => {
+  it("uses the backward-compatible defaults", () => {
+    expect(resolveSecurityHeaders()).toEqual({
+      "X-XSS-Protection": "0",
+      "X-Frame-Options": "SAMEORIGIN",
+      "X-Content-Type-Options": "nosniff",
+    });
+  });
+
+  it("accepts custom values for all supported headers", () => {
+    expect(resolveSecurityHeaders(CUSTOM_SECURITY_HEADERS)).toEqual(CUSTOM_SECURITY_HEADERS);
+  });
+
+  it.each(SECURITY_HEADER_NAMES)("disables %s without changing the other headers", (disabled) => {
+    const options: SecurityHeadersOptions = {
+      ...CUSTOM_SECURITY_HEADERS,
+      [disabled]: false,
+    };
+    const resolved = resolveSecurityHeaders(options);
+    expect(resolved[disabled]).toBeUndefined();
+    for (const name of SECURITY_HEADER_NAMES) {
+      if (name !== disabled) expect(resolved[name]).toBe(CUSTOM_SECURITY_HEADERS[name]);
+    }
+  });
+
+  it("applies a resolved custom map to fallback responses", () => {
+    const res = makeMockRes();
+    const resolved = resolveSecurityHeaders({
+      "X-Frame-Options": false,
+      "Strict-Transport-Security": "max-age=31536000",
+    });
+    ensureFallbackHeaders(res, resolved);
+    expect(res.getHeader("X-Frame-Options")).toBeUndefined();
+    expect(res.getHeader("Strict-Transport-Security")).toBe("max-age=31536000");
   });
 });
 
