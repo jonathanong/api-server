@@ -9,6 +9,7 @@ import { describe, it, expect } from "vitest";
 import request from "supertest";
 import createHttpError from "http-errors";
 import { Application } from "./application.mts";
+import { mockResponseListenerBudget } from "./test-helpers/mock-response-listener-budget.mts";
 import { withServer } from "./test-helpers/with-server.mts";
 
 // Shared mock factory — produces a minimal IncomingMessage / ServerResponse pair
@@ -35,6 +36,7 @@ function makeMockReqRes(url: string): [import("node:http").IncomingMessage, Mock
   const chunks: string[] = [];
   const headers: Record<string, string | number> = {};
   const mockRes: MockRes = {
+    ...mockResponseListenerBudget(),
     headersSent: false,
     statusCode: 200,
     chunks,
@@ -253,6 +255,7 @@ describe("Application outer safety-net (handleRequest catch)", () => {
     } as unknown as import("node:http").IncomingMessage;
 
     const mockRes = {
+      ...mockResponseListenerBudget(),
       headersSent,
       writableEnded: false,
       statusCode: 200,
@@ -288,6 +291,7 @@ describe("Application outer safety-net (handleRequest catch)", () => {
     const headers: Record<string, string | number> = {};
     let failNextHeader = true;
     const mockRes = {
+      ...mockResponseListenerBudget(),
       headersSent: false,
       writableEnded: false,
       statusCode: 200,

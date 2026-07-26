@@ -6,6 +6,7 @@ import type { AddressInfo } from "node:net";
 import { Application, createApp } from "./application.mts";
 import type { Context } from "./context.mts";
 import type { SecurityHeaderName, SecurityHeadersOptions } from "./index.mts";
+import { mockResponseListenerBudget } from "./test-helpers/mock-response-listener-budget.mts";
 import { withServer } from "./test-helpers/with-server.mts";
 
 const SECURITY_HEADER_NAMES = [
@@ -132,6 +133,7 @@ describe("Application", () => {
         on: () => mockReq,
       } as unknown as import("node:http").IncomingMessage;
       const mockRes = {
+        ...mockResponseListenerBudget(),
         headersSent: false,
         writableEnded: false,
         statusCode: 200,
@@ -175,6 +177,7 @@ describe("Application", () => {
         on: () => mockReq,
       } as unknown as import("node:http").IncomingMessage;
       const mockRes = {
+        ...mockResponseListenerBudget(),
         headersSent: false,
         writableEnded: false,
         statusCode: 200,
@@ -369,6 +372,7 @@ describe("Application", () => {
       on: () => mockReq,
     } as unknown as import("node:http").IncomingMessage;
     const mockRes = {
+      ...mockResponseListenerBudget(),
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
@@ -412,6 +416,7 @@ describe("Application", () => {
       on: () => mockReq,
     } as unknown as import("node:http").IncomingMessage;
     const mockRes = {
+      ...mockResponseListenerBudget(),
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
@@ -447,6 +452,7 @@ describe("Application", () => {
       on: () => mockReq,
     } as unknown as import("node:http").IncomingMessage;
     const mockRes = {
+      ...mockResponseListenerBudget(),
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
@@ -499,6 +505,7 @@ describe("Application", () => {
       on: () => mockReq,
     } as unknown as import("node:http").IncomingMessage;
     const mockRes = {
+      ...mockResponseListenerBudget(),
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
@@ -535,6 +542,7 @@ describe("Application", () => {
       on: () => mockReq,
     } as unknown as import("node:http").IncomingMessage;
     const mockRes = {
+      ...mockResponseListenerBudget(),
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
@@ -574,6 +582,7 @@ describe("Application", () => {
       on: () => mockReq,
     } as unknown as import("node:http").IncomingMessage;
     const mockRes = {
+      ...mockResponseListenerBudget(),
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
@@ -610,6 +619,7 @@ describe("Application", () => {
       on: () => mockReq,
     } as unknown as import("node:http").IncomingMessage;
     const mockResInner = {
+      ...mockResponseListenerBudget(),
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
