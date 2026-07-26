@@ -43,6 +43,12 @@ response closes before `res.writableEnded` is true, `abortController.abort()`
 is called. This means `ctx.signal.aborted` becomes `true` and any code awaiting
 the signal is notified.
 
+For responses with a finite listener limit, the framework temporarily reserves
+one listener slot before registering this handler and releases that slot when
+the response closes. The reservation adjusts the live limit relatively so it
+composes with other response listeners. Unlimited listener limits are left
+unchanged.
+
 Reading a request body to completion also closes the request-side stream. That
 does not abort `ctx.signal`; a POST handler can consume JSON and then keep a
 streaming response open with the same signal. A normally completed response

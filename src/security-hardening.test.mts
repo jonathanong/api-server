@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import request from "supertest";
 import { Application } from "./application.mts";
+import { mockResponseListenerBudget } from "./test-helpers/mock-response-listener-budget.mts";
 import { withServer } from "./test-helpers/with-server.mts";
 
 describe("fallbackContentSecurityPolicy", () => {
@@ -107,6 +108,7 @@ async function invokeWithMethod(
       on: () => req,
     } as unknown as import("node:http").IncomingMessage;
     const mockRes = {
+      ...mockResponseListenerBudget(),
       headersSent: false,
       writableEnded: false,
       statusCode: 200,

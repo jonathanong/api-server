@@ -4,6 +4,7 @@ import request from "supertest";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { Application } from "./application.mts";
 import type { Context } from "./context.mts";
+import { mockResponseListenerBudget } from "./test-helpers/mock-response-listener-budget.mts";
 import { withServer } from "./test-helpers/with-server.mts";
 
 describe("Context", () => {
@@ -384,6 +385,7 @@ describe("Context", () => {
       on: () => mockReq,
     } as unknown as import("node:http").IncomingMessage;
     const mockRes = {
+      ...mockResponseListenerBudget(),
       headersSent: false,
       writableEnded: false,
       statusCode: 200,

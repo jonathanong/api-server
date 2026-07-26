@@ -8,6 +8,7 @@ import { ServerTiming } from "./server-timing.mts";
 import { Logger } from "./logger.mts";
 import type { ApplicationOptions, OversizedBodyStrategy } from "./types.mts";
 import { getRawPath } from "./request-path.mts";
+import { createRequestAbortController } from "./request-abort.mts";
 import {
   applySecurityHeaders,
   ensureFallbackHeaders,
@@ -106,15 +107,9 @@ export class Application extends EventEmitter {
   }
 
   private async runRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
-    const abortController = new AbortController();
+    const abortController = createRequestAbortController(res);
     const timing = new ServerTiming();
     const ContextClass = this.contextClass;
-
-    res.once("close", () => {
-      if (!res.writableEnded) {
-        abortController.abort();
-      }
-    });
 
     const { onWriteHead, onFinish } = this.logger.onRequestStart(req);
 

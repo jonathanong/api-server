@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import request from "supertest";
 import { Application } from "./application.mts";
+import { mockResponseListenerBudget } from "./test-helpers/mock-response-listener-budget.mts";
 import { withServer } from "./test-helpers/with-server.mts";
 
 describe("Response", () => {
@@ -129,6 +130,7 @@ describe("Response", () => {
       on: () => mockReq,
     } as unknown as import("node:http").IncomingMessage;
     const mockRes = {
+      ...mockResponseListenerBudget(),
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
@@ -179,6 +181,7 @@ describe("Response", () => {
       on: () => mockReq,
     } as unknown as import("node:http").IncomingMessage;
     const mockRes = {
+      ...mockResponseListenerBudget(),
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
@@ -318,6 +321,7 @@ describe("Response", () => {
       on: () => mockReq,
     } as unknown as import("node:http").IncomingMessage;
     const mockRes = {
+      ...mockResponseListenerBudget(),
       headersSent: false,
       writableEnded: false,
       statusCode: 200,
