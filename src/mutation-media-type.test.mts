@@ -12,11 +12,11 @@ describe("mutation request media types", () => {
   it("hands accepted request error ownership to the handler without yielding", async () => {
     const { Readable } = await import("node:stream");
     const app = new Application();
-    let handlerOwnedError = false;
-    app.route("/owned").post((ctx) => {
-      ctx.req.once("error", () => {
-        handlerOwnedError = true;
+    app.route("/owned").post(async (ctx) => {
+      const handlerOwnedError = await new Promise<boolean>((resolve) => {
+        ctx.req.once("error", () => resolve(true));
       });
+      ctx.json({ handlerOwnedError });
     });
     const req = new Readable({ read() {} }) as unknown as import("node:http").IncomingMessage;
     Object.assign(req, {
@@ -25,7 +25,10 @@ describe("mutation request media types", () => {
       headers: { "content-type": "application/json" },
       httpVersionMajor: 2,
     });
-    const res = makeMockResponse();
+    let responseBody = "";
+    const res = makeMockResponse((body) => {
+      responseBody = body;
+    });
     let uncaught: Error | undefined;
     const onUncaught = (error: Error) => {
       uncaught = error;
@@ -35,7 +38,7 @@ describe("mutation request media types", () => {
       app.callback()(req, res);
       (req as unknown as import("node:stream").Readable).destroy(new Error("handler-owned"));
       await new Promise<void>((resolve) => setImmediate(resolve));
-      expect(handlerOwnedError).toBe(true);
+      expect(JSON.parse(responseBody)).toEqual({ handlerOwnedError: true });
       expect(uncaught).toBeUndefined();
     } finally {
       process.removeListener("uncaughtException", onUncaught);
@@ -72,6 +75,7 @@ describe("mutation request media types", () => {
     await withHttp2(app, async (client) => {
       expect((await sendHttp2(client, "/accepted", "application/json", body)).status).toBe(200);
       expect((await sendHttp2(client, "/rejected", "text/plain", body)).status).toBe(415);
+      expect((await sendHttp2(client, "/unmatched", "application/json", body)).status).toBe(404);
       await new Promise<void>((resolve) => setImmediate(resolve));
       expect(acceptedRequest?.readableEnded).toBe(true);
     });
@@ -346,7 +350,7 @@ function sendHttp2(
   });
 }
 
-function makeMockResponse(): import("node:http").ServerResponse {
+function makeMockResponse(onEnd: (body: string) => void): import("node:http").ServerResponse {
   const response = new EventEmitter();
   return Object.assign(response, {
     headersSent: false,
@@ -355,6 +359,6 @@ function makeMockResponse(): import("node:http").ServerResponse {
     setHeader: () => {},
     getHeader: () => undefined,
     writeHead: () => {},
-    end: () => {},
+    end: (body: string | Buffer) => onEnd(String(body)),
   }) as unknown as import("node:http").ServerResponse;
 }

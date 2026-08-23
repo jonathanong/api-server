@@ -147,26 +147,26 @@ export class Application extends EventEmitter {
       );
       if (mediaTypeCheck) await mediaTypeCheck;
 
-      if (found) {
-        ctx.params = found.params;
-        try {
+      try {
+        if (found) {
+          ctx.params = found.params;
           await found.handler(req, res, found.params, ctx, found.searchParams);
-        } finally {
-          drainUnreadHttp2Mutation(req);
         }
-      }
 
-      if (!ctx.response.sent) {
-        if (this.notFoundHandlerFn) {
-          await this.notFoundHandlerFn(ctx);
-        } else {
-          ensureFallbackHeaders(res, this.securityHeaders, this.fallbackContentSecurityPolicy);
-          res.writeHead(404);
-          res.end("Not Found");
+        if (!ctx.response.sent) {
+          if (this.notFoundHandlerFn) {
+            await this.notFoundHandlerFn(ctx);
+          } else {
+            ensureFallbackHeaders(res, this.securityHeaders, this.fallbackContentSecurityPolicy);
+            res.writeHead(404);
+            res.end("Not Found");
+          }
         }
-      }
 
-      onFinish(res.statusCode);
+        onFinish(res.statusCode);
+      } finally {
+        drainUnreadHttp2Mutation(req);
+      }
     } catch (err) {
       const error = err instanceof Error ? err : new Error(safeString(err));
 
