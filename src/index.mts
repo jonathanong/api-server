@@ -10,7 +10,8 @@ export type { LoggerOptions } from "./logger.mts";
 export * from "./etag.mts";
 export * from "./cache-control.mts";
 export * from "./compression.mts";
-export * from "./stream-json-object.mts";
+export { streamJsonObject } from "./stream-json-object.mts";
+export type { StreamJsonObjectInput } from "./stream-json-object.mts";
 export type { Handler, RouteBuilder } from "./router.mts";
 export type { MutationRouteOptions } from "./mutation-media-type.mts";
 export type {
