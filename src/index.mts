@@ -11,6 +11,7 @@ export * from "./etag.mts";
 export * from "./cache-control.mts";
 export * from "./compression.mts";
 export type { Handler, RouteBuilder } from "./router.mts";
+export type { MutationRouteOptions } from "./mutation-media-type.mts";
 export type {
   CookieOptions,
   ApplicationOptions,

@@ -3,6 +3,8 @@ import request from "supertest";
 import { Application } from "./application.mts";
 import { withServer } from "./test-helpers/with-server.mts";
 
+const RAW_BODY_OPTIONS = { acceptedMediaTypes: ["application/octet-stream"] };
+
 describe("Request", () => {
   it('is("json") returns truthy for application/json', async () => {
     const app = new Application();
@@ -21,9 +23,12 @@ describe("Request", () => {
 
   it('is("json") returns falsy for text/plain', async () => {
     const app = new Application();
-    app.route("/test").post((ctx) => {
-      ctx.json({ isJson: ctx.request.is("json") });
-    });
+    app.route("/test").post(
+      (ctx) => {
+        ctx.json({ isJson: ctx.request.is("json") });
+      },
+      { acceptedMediaTypes: ["text/plain"] },
+    );
 
     await withServer(app.callback(), async (server) => {
       const res = await request(server)
@@ -76,7 +81,7 @@ describe("Request", () => {
     app.route("/test").post(async (ctx) => {
       const buf = await ctx.request.buffer();
       ctx.json({ isBuffer: Buffer.isBuffer(buf), content: buf.toString() });
-    });
+    }, RAW_BODY_OPTIONS);
 
     await withServer(app.callback(), async (server) => {
       const res = await request(server)
@@ -93,7 +98,7 @@ describe("Request", () => {
     app.route("/test").post(async (ctx) => {
       await ctx.request.buffer("1b");
       ctx.json({ ok: true });
-    });
+    }, RAW_BODY_OPTIONS);
 
     // No custom error handler — ctx.json() in an error handler races with body
     // draining after 413 rejection, causing flaky socket hang ups in CI.
@@ -129,7 +134,7 @@ describe("Request", () => {
     app.route("/test").post(async (ctx) => {
       await ctx.request.buffer("1b");
       ctx.json({ ok: true });
-    });
+    }, RAW_BODY_OPTIONS);
 
     await withServer(app.callback(), async (server) => {
       // First request exceeds limit — uses default error handler to avoid body drain race
@@ -158,7 +163,7 @@ describe("Request", () => {
     await withServer(app.callback(), async (server) => {
       const res = await request(server)
         .post("/test")
-        .set("Content-Type", "application/octet-stream")
+        .set("Content-Type", "application/json")
         .set("Content-Length", "0");
       expect(res.body.length).toBe(0);
     });
@@ -185,7 +190,7 @@ describe("Request", () => {
       const p1 = ctx.request.buffer();
       const p2 = ctx.request.buffer();
       ctx.json({ samePromise: p1 === p2 });
-    });
+    }, RAW_BODY_OPTIONS);
 
     await withServer(app.callback(), async (server) => {
       const res = await request(server)
@@ -201,7 +206,7 @@ describe("Request", () => {
     app.route("/test").post(async (ctx) => {
       const buf = await ctx.request.buffer("banana");
       ctx.json({ length: buf.length });
-    });
+    }, RAW_BODY_OPTIONS);
 
     await withServer(app.callback(), async (server) => {
       const res = await request(server)
@@ -218,7 +223,7 @@ describe("Request", () => {
     app.route("/test").post(async (ctx) => {
       await ctx.request.buffer();
       ctx.json({ ok: true });
-    });
+    }, RAW_BODY_OPTIONS);
 
     await withServer(app.callback(), async (server) => {
       const res = await request(server)
@@ -234,7 +239,7 @@ describe("Request", () => {
     app.route("/test").post(async (ctx) => {
       const buf = await ctx.request.buffer();
       ctx.json({ length: buf.length });
-    });
+    }, RAW_BODY_OPTIONS);
 
     await withServer(app.callback(), async (server) => {
       const res = await request(server)

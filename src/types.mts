@@ -35,13 +35,4 @@ export interface ApplicationOptions {
   trustProxy?: boolean;
   /** Reject methods outside node:http.METHODS with 400. Defaults to false. */
   strictHttpMethods?: boolean;
-  /**
-   * When true, ctx.request.json() rejects requests whose Content-Type is not
-   * application/json (or a compatible JSON subtype such as application/merge-patch+json)
-   * with a 415 Unsupported Media Type error. Requests with no body are unaffected.
-   *
-   * Defaults to false (lenient: any Content-Type is accepted, preserving
-   * backward-compatible behavior).
-   */
-  strictJsonContentType?: boolean;
 }

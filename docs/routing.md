@@ -37,6 +37,40 @@ app.route("/users/:id").delete((ctx) => {
 });
 ```
 
+## Mutation request media types
+
+For `POST`, `PUT`, `PATCH`, and `DELETE`, a body-bearing request must use
+`application/json` or an `application/*+json` subtype. This check runs before
+the route handler and also applies when no route matches, so handlers that do
+not call `ctx.request.json()` remain protected. The default allows media-type
+parameters and is case-insensitive.
+
+For HTTP/1, requests with no `Content-Length` or `Transfer-Encoding`, or with
+`Content-Length: 0`, are bodyless and remain valid without a `Content-Type`.
+`Transfer-Encoding` always indicates a body. HTTP/2 has no equivalent framing
+header: a JSON-typed request proceeds directly, while a missing or unsupported
+type is held until either END_STREAM (bodyless) or its first DATA frame (415).
+Node's HTTP parser rejects malformed `Content-Length` before it invokes the
+application callback, using its normal `400 Bad Request` behavior. Other HTTP
+methods are unaffected by this policy and retain the `strictHttpMethods`
+behavior described below.
+
+Use the optional second argument on a mutation route to replace the JSON
+default with the deliberate media types that route accepts. Matching is exact
+after ignoring parameters and case, unless the declared type contains `*`; a
+wildcard matches any characters in that position. For example, an RFC one-click
+unsubscribe route can accept an HTML form body:
+
+```ts
+app.route("/unsubscribe").post(handleUnsubscribe, {
+  acceptedMediaTypes: ["application/x-www-form-urlencoded"],
+});
+```
+
+An explicit list replaces, rather than adds to, the default JSON types. Include
+`"application/json"` or `"application/*+json"` in that list when the route
+also accepts JSON.
+
 ## Chaining verbs
 
 `.get()`, `.post()`, `.put()`, `.patch()`, and `.delete()` all return the same

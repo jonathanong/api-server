@@ -12,10 +12,13 @@ argument accepts a byte count (number), a human-readable string such as
 limit for that call.
 
 ```ts
-app.route("/upload").post(async (ctx) => {
-  const buf = await ctx.request.buffer("5mb");
-  ctx.json({ bytes: buf.length });
-});
+app.route("/upload").post(
+  async (ctx) => {
+    const buf = await ctx.request.buffer("5mb");
+    ctx.json({ bytes: buf.length });
+  },
+  { acceptedMediaTypes: ["application/octet-stream"] },
+);
 ```
 
 Calling `buffer()` a second time returns the same cached `Promise` — the body
@@ -76,13 +79,27 @@ string or an array of strings (MIME type shortcuts such as `"json"` and
 `"multipart"` are supported).
 
 ```ts
-app.route("/data").post((ctx) => {
-  if (ctx.request.is("json")) {
-    // application/json
-  }
-  if (ctx.request.is(["json", "urlencoded"])) {
-    // either
-  }
+app.route("/data").post(
+  (ctx) => {
+    if (ctx.request.is("json")) {
+      // application/json
+    }
+    if (ctx.request.is(["json", "urlencoded"])) {
+      // either
+    }
+  },
+  { acceptedMediaTypes: ["application/json", "application/x-www-form-urlencoded"] },
+);
+```
+
+Body-bearing mutation routes default to JSON media types before this helper or
+any route handler runs. Declare deliberate raw or form-body exceptions with
+the optional route argument, as described in [Routing: mutation request media
+types](routing.md#mutation-request-media-types):
+
+```ts
+app.route("/unsubscribe").post(handleUnsubscribe, {
+  acceptedMediaTypes: ["application/x-www-form-urlencoded"],
 });
 ```
 
@@ -98,9 +115,12 @@ an interim 100 response. Requests whose size is not known in advance still
 receive 100 Continue and are closed if the streamed body crosses the limit.
 
 ```ts
-app.route("/large-upload").post(async (ctx) => {
-  // If the client sent Expect: 100-continue, writeContinue() is called here
-  const buf = await ctx.request.buffer("50mb");
-  ctx.json({ received: buf.length });
-});
+app.route("/large-upload").post(
+  async (ctx) => {
+    // If the client sent Expect: 100-continue, writeContinue() is called here
+    const buf = await ctx.request.buffer("50mb");
+    ctx.json({ received: buf.length });
+  },
+  { acceptedMediaTypes: ["application/octet-stream"] },
+);
 ```

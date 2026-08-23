@@ -2,13 +2,22 @@ import { EventEmitter } from "node:events";
 import type { IncomingMessage, ServerResponse, RequestListener } from "node:http";
 import type { AsyncLocalStorage } from "node:async_hooks";
 import { Context, createContextClass } from "./context.mts";
-import { createRouteBuilder, isSupportedHttpMethod, type RouteBuilder } from "./router.mts";
+import {
+  createRouteBuilder,
+  getAcceptedMediaTypes,
+  isSupportedHttpMethod,
+  type RouteBuilder,
+} from "./router.mts";
 import Router from "find-my-way";
 import { ServerTiming } from "./server-timing.mts";
 import { Logger } from "./logger.mts";
 import type { ApplicationOptions, OversizedBodyStrategy } from "./types.mts";
 import { getRawPath } from "./request-path.mts";
 import { createRequestAbortController } from "./request-abort.mts";
+import {
+  assertAcceptedMutationMediaType,
+  drainUnreadHttp2Mutation,
+} from "./mutation-media-type.mts";
 import {
   applySecurityHeaders,
   ensureFallbackHeaders,
@@ -34,7 +43,6 @@ export class Application extends EventEmitter {
   private bodyLimit: string | number | false;
   private readonly securityHeaders: ResolvedSecurityHeaders;
   private trustProxy: boolean;
-  private strictJsonContentType: boolean;
   private readonly oversizedBodyStrategy: OversizedBodyStrategy;
   private readonly fallbackContentSecurityPolicy: string | false;
   private readonly strictHttpMethods: boolean;
@@ -45,7 +53,6 @@ export class Application extends EventEmitter {
     this.bodyLimit = options?.bodyLimit ?? "1mb";
     this.securityHeaders = resolveSecurityHeaders(options?.securityHeaders);
     this.trustProxy = options?.trustProxy ?? false;
-    this.strictJsonContentType = options?.strictJsonContentType ?? false;
     this.oversizedBodyStrategy = options?.oversizedBodyStrategy ?? "drain";
     this.fallbackContentSecurityPolicy = options?.fallbackContentSecurityPolicy ?? false;
     this.strictHttpMethods = options?.strictHttpMethods ?? false;
@@ -81,17 +88,12 @@ export class Application extends EventEmitter {
   private handleRequest(req: IncomingMessage, res: ServerResponse): void {
     const run = () =>
       this.runRequest(req, res).catch((err: unknown) => {
-        // Safety net: if runRequest rejects before its own try-catch (e.g. during
-        // context/timing setup), ensure the client always gets a response instead
-        // of a socket hang-up from an unhandled promise rejection.
         const error = err instanceof Error ? err : new Error(safeString(err));
         try {
           if (this.listenerCount("error") > 0) {
             this.emit("error", error);
           }
-        } catch {
-          // Swallow listener throws so the 500 response still goes out.
-        }
+        } catch {}
         if (!res.headersSent) {
           ensureFallbackHeaders(res, this.securityHeaders, this.fallbackContentSecurityPolicy);
           res.writeHead(500);
@@ -123,7 +125,6 @@ export class Application extends EventEmitter {
       this.bodyLimit,
       this.trustProxy,
       onWriteHead,
-      this.strictJsonContentType,
       this.oversizedBodyStrategy,
     );
 
@@ -140,9 +141,19 @@ export class Application extends EventEmitter {
 
       const found = this.router.find(method as Router.HTTPMethod, routePath);
 
+      const mediaTypeCheck = assertAcceptedMutationMediaType(
+        req,
+        found ? getAcceptedMediaTypes(found.handler) : undefined,
+      );
+      if (mediaTypeCheck) await mediaTypeCheck;
+
       if (found) {
         ctx.params = found.params;
-        await found.handler(req, res, found.params, ctx, found.searchParams);
+        try {
+          await found.handler(req, res, found.params, ctx, found.searchParams);
+        } finally {
+          drainUnreadHttp2Mutation(req);
+        }
       }
 
       if (!ctx.response.sent) {
@@ -171,9 +182,6 @@ export class Application extends EventEmitter {
             this.emit("error", handlerErr);
           }
         }
-        // Safety net: ensure the client always receives a response, even if the
-        // registered error handler threw or returned without sending one. Without
-        // this, requests hang until the socket times out (issue #1948).
         if (!res.headersSent) {
           sendFallback(res, this.securityHeaders, this.fallbackContentSecurityPolicy);
         }
