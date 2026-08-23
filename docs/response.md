@@ -79,6 +79,35 @@ app.route("/decompressed").get(async (ctx) => {
 `pipeline()` returns a `Promise` that resolves when the stream finishes. The
 `Server-Timing` header is sent as an HTTP trailer for streaming responses.
 
+### Streaming JSON objects
+
+`streamJsonObject()` produces a backpressure-safe readable JSON object. Use it
+with `ctx.pipeline()` for object fields whose values may settle asynchronously.
+Synchronous properties are emitted first in object order; promise properties
+are emitted in settlement order, and `undefined` properties are omitted.
+`streamJsonObject()` observes only top-level properties; nested values are
+passed unchanged to the JSON stream serializer. Pass a plain data object: its
+property enumeration follows `Object.entries()`.
+
+```ts
+import { streamJsonObject } from "@jongleberry/api-server";
+
+app.route("/dashboard").get(async (ctx) => {
+  ctx.setType("application/json; charset=utf-8");
+  await ctx.pipeline(
+    streamJsonObject({
+      profile: getProfile(),
+      recommendations: getRecommendations(),
+      optional: undefined,
+    }),
+  );
+});
+```
+
+If a top-level promise rejects or a value cannot be serialized, the stream
+errors and `pipeline()` rejects. Destroying the consumer cancels the active
+serializer.
+
 ### HEAD handling
 
 For both buffered and streaming responses, `HEAD` requests receive the same

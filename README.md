@@ -42,7 +42,7 @@ app.route("/").get((ctx) => ctx.json({ ok: true }));
 
 - **Trie router** — `find-my-way` under the hood; zero regex overhead on the hot path
 - **Buffered responses** — `ctx.json()`, `ctx.response.text()`, `.html()`, `.xml()`, `.buffer()`
-- **Streaming** — `ctx.pipeline(readable, ...transforms)` with back-pressure and error propagation
+- **Streaming** — `ctx.pipeline(readable, ...transforms)` and `streamJsonObject()` with back-pressure and error propagation
 - **Automatic ETag** — SHA-256 ETag on every buffered 2xx; `If-None-Match` → 304
 - **Compression** — `br` / `gzip` / `deflate` negotiation; 1 KB threshold; `SYNC_FLUSH` for streams
 - **Server-Timing** — response latency as a `Server-Timing` header (buffered) or trailer (streaming)
