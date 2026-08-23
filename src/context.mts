@@ -44,19 +44,12 @@ export class Context {
     bodyLimit: string | number | false,
     trustProxy: boolean,
     onWriteHead?: () => void,
-    strictJsonContentType?: boolean,
     oversizedBodyStrategy?: OversizedBodyStrategy,
   ) {
     this.req = req;
     this.res = res;
     this.params = params;
-    this.request = new Request(
-      req,
-      res,
-      bodyLimit,
-      strictJsonContentType ?? false,
-      oversizedBodyStrategy ?? "drain",
-    );
+    this.request = new Request(req, res, bodyLimit, oversizedBodyStrategy ?? "drain");
     this.response = new Response(req, res, timing, onWriteHead);
     this.cookies = new Cookies(req, res);
     this.abortController = abortController;

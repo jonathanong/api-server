@@ -133,7 +133,7 @@ describe("close strategy safety paths", () => {
         continued = true;
       },
     } as unknown as import("node:http").ServerResponse;
-    const body = new Request(stream, res, "2b", false, "close").buffer();
+    const body = new Request(stream, res, "2b", "close").buffer();
     stream.push(Buffer.from("x"));
     stream.push(null);
     await expect(body).resolves.toEqual(Buffer.from("x"));
@@ -147,7 +147,7 @@ describe("close strategy safety paths", () => {
       headersSent: false,
       setHeader: (name: string, value: string) => headers.set(name, value),
     } as unknown as import("node:http").ServerResponse;
-    const body = new Request(stream, res, "1b", false, "close").buffer();
+    const body = new Request(stream, res, "1b", "close").buffer();
     stream.push(Buffer.alloc(2));
     await expect(body).rejects.toMatchObject({ status: 413 });
     expect(headers.get("Connection")).toBe("close");
@@ -164,7 +164,7 @@ describe("close strategy safety paths", () => {
         destroyed = true;
       },
     } as unknown as import("node:http").ServerResponse;
-    const body = new Request(stream, res, "1b", false, "close").buffer();
+    const body = new Request(stream, res, "1b", "close").buffer();
     stream.push(Buffer.alloc(2));
     await expect(body).rejects.toMatchObject({ status: 413 });
     expect(destroyed).toBe(true);
@@ -182,7 +182,7 @@ describe("close strategy safety paths", () => {
         destroyed = true;
       },
     } as unknown as import("node:http").ServerResponse;
-    const body = new Request(stream, res, "1b", false, "close").buffer();
+    const body = new Request(stream, res, "1b", "close").buffer();
     stream.push(Buffer.alloc(2));
     await expect(body).rejects.toMatchObject({ status: 413 });
     expect(destroyed).toBe(true);
@@ -191,10 +191,13 @@ describe("close strategy safety paths", () => {
 
 function makeBodyApp(strategy: "drain" | "close" = "drain"): Application {
   const app = new Application({ bodyLimit: "1b", oversizedBodyStrategy: strategy });
-  app.route("/").post(async (ctx) => {
-    const body = await ctx.request.buffer();
-    ctx.json({ length: body.length });
-  });
+  app.route("/").post(
+    async (ctx) => {
+      const body = await ctx.request.buffer();
+      ctx.json({ length: body.length });
+    },
+    { acceptedMediaTypes: ["application/octet-stream"] },
+  );
   return app;
 }
 
@@ -230,7 +233,10 @@ async function sendHttp1(
         method: "POST",
         path: "/",
         agent,
-        headers: contentLength === undefined ? {} : { "Content-Length": contentLength },
+        headers:
+          contentLength === undefined
+            ? { "Content-Type": "application/octet-stream" }
+            : { "Content-Length": contentLength, "Content-Type": "application/octet-stream" },
       },
       (res) => collectHttp1Response(res, socket, resolve),
     );
@@ -272,7 +278,11 @@ async function sendExpectRequest(
       port: (server.address() as AddressInfo).port,
       method: "POST",
       path: "/",
-      headers: { Expect: "100-continue", "Content-Length": body.length },
+      headers: {
+        Expect: "100-continue",
+        "Content-Length": body.length,
+        "Content-Type": "application/octet-stream",
+      },
     });
     req.on("socket", (value) => {
       socket = value;
@@ -298,6 +308,7 @@ async function sendHttp2(
       ":method": "POST",
       ":path": "/",
       "content-length": body.length,
+      "content-type": "application/octet-stream",
     });
     let headers: http2.IncomingHttpHeaders = {};
     const chunks: Buffer[] = [];

@@ -74,10 +74,13 @@ describe("Application not-found handling", () => {
 
   it("100-continue handling", async () => {
     const app = new Application();
-    app.route("/upload").post(async (ctx) => {
-      const buf = await ctx.request.buffer();
-      ctx.json({ size: buf.length });
-    });
+    app.route("/upload").post(
+      async (ctx) => {
+        const buf = await ctx.request.buffer();
+        ctx.json({ size: buf.length });
+      },
+      { acceptedMediaTypes: ["application/octet-stream"] },
+    );
 
     await withServer(app.callback(), async (server) => {
       // supertest doesn't send Expect: 100-continue, but we verify the code path
@@ -104,8 +107,8 @@ describe("Application not-found handling", () => {
         .post("/no-such-route")
         .set("Content-Type", "application/octet-stream")
         .send(Buffer.from("data"));
-      // Should get 404, not hang or error from premature 100 Continue
-      expect(res.status).toBe(404);
+      // The global media-type policy runs before not-found handling.
+      expect(res.status).toBe(415);
     });
   });
 

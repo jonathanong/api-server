@@ -86,8 +86,6 @@ Options:
   modified, and an existing CSP header is preserved.
 - `strictHttpMethods`: when `true`, methods outside Node's supported method set
   receive `400 Unsupported HTTP method` before routing. Defaults to `false`.
-- `strictJsonContentType`: when `true`, `request.json()` requires a JSON media
-  type for non-empty bodies. Defaults to `false`.
 - `trustProxy`: when `true`, `ctx.ip` may use `cf-connecting-ip` and
   `x-forwarded-for`. Defaults to `false`, so `ctx.ip` uses the socket address.
 - `securityHeaders`: custom values or `false` for the security headers described
