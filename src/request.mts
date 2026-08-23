@@ -66,6 +66,8 @@ function readBody(
   limit: string | number | false,
   oversizedBodyStrategy: OversizedBodyStrategy,
 ): Promise<Buffer> {
+  if (req.readableEnded) return Promise.resolve(Buffer.alloc(0));
+
   return new Promise((resolve, reject) => {
     const maxBytes = parseLimit(limit);
     if (oversizedBodyStrategy === "close") {

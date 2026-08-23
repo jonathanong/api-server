@@ -100,10 +100,16 @@ describe("mutation request media types", () => {
 
   it("allows HTTP/2 mutations with no body framing", async () => {
     const app = new Application();
-    app.route("/empty").post((ctx) => ctx.json({ ok: true }));
+    app.route("/empty").post(async (ctx) => {
+      const body = await ctx.request.buffer();
+      ctx.json({ bodyLength: body.length });
+    });
 
     await withHttp2(app, async (client) => {
-      expect(await sendHttp2(client, "/empty")).toEqual({ status: 200, body: '{"ok":true}' });
+      expect(await sendHttp2(client, "/empty")).toEqual({
+        status: 200,
+        body: '{"bodyLength":0}',
+      });
     });
   });
 
