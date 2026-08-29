@@ -85,15 +85,18 @@ function errorDetails(
 /** Classifies only known network error codes, following a finite error cause chain. */
 export function isRetryableNetworkError(error: unknown): boolean {
   const seen = new Set<object>();
+  let retryable = false;
   let current = error;
   while (isObject(current) && !seen.has(current)) {
     seen.add(current);
     const details = errorDetails(current);
     if (!details || details.name === "AbortError") return false;
-    if (typeof details.code === "string" && RETRYABLE_NETWORK_CODES.has(details.code)) return true;
+    if (typeof details.code === "string" && RETRYABLE_NETWORK_CODES.has(details.code)) {
+      retryable = true;
+    }
     current = details.cause;
   }
-  return false;
+  return retryable;
 }
 
 function assertBackoffOptions(options: ExponentialBackoffOptions): void {

@@ -108,6 +108,14 @@ describe("isRetryableNetworkError", () => {
     expect(isRetryableNetworkError(abort)).toBe(false);
   });
 
+  it("keeps nested abort causes terminal even when a wrapper has a retryable code", () => {
+    const error = Object.assign(new Error("request cancelled"), {
+      code: "ECONNRESET",
+      cause: new DOMException("cancelled", "AbortError"),
+    });
+    expect(isRetryableNetworkError(error)).toBe(false);
+  });
+
   it("terminates safely for cyclic causes", () => {
     const error = Object.assign(new Error("cycle"), { code: "EACCES" });
     Object.assign(error, { cause: error });
