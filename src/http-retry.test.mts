@@ -60,6 +60,8 @@ describe("parseRetryAfter", () => {
     expect(parseRetryAfter(["1", "2"], now)).toBeNull();
     expect(parseRetryAfter("January 1, 2026", now)).toBeNull();
     expect(parseRetryAfter("Thu, 01 Jan 2026 00:00:05 PST", now)).toBeNull();
+    expect(parseRetryAfter("Xyz, 01 Jan 2026 00:00:05 GMT", now)).toBeNull();
+    expect(parseRetryAfter("Thu, 01 Xxx 2026 00:00:05 GMT", now)).toBeNull();
     expect(parseRetryAfter("Thu, 32 Jan 2026 00:00:05 GMT", now)).toBeNull();
     expect(parseRetryAfter("Wed, 01 Jan 2026 00:00:05 GMT", now)).toBeNull();
   });

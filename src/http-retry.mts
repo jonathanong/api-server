@@ -24,8 +24,7 @@ const RETRYABLE_NETWORK_CODES = new Set([
   "UND_ERR_SOCKET",
 ]);
 const DECIMAL_SECONDS = /^(?:0|[1-9]\d*)$/;
-const HTTP_DATE =
-  /^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4} \d{2}:\d{2}:\d{2} GMT$/;
+const HTTP_DATE = /^[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT$/;
 
 function isHeaderGetter(headers: HeaderSource): headers is HeaderGetter {
   return typeof (headers as HeaderGetter | undefined)?.get === "function";
