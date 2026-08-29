@@ -16,5 +16,7 @@
 | [abort-signals.md](abort-signals.md)             | `ctx.signal` / `ctx.abortController`, client-disconnect propagation                         |
 | [logger.md](logger.md)                           | Concurrency-bar visualization, `LOG_LEVEL`, `timingThresholds`, production/test suppression |
 | [trusted-client-ip.md](trusted-client-ip.md)     | IP precedence and runtime helpers for Node, Deno, and Bun                                   |
+| [http-retry.md](http-retry.md)                   | Strict headers, Retry-After, retryable network errors, and pure backoff                     |
+| [sha256.md](sha256.md)                           | Node SHA-256 digest bytes and ETag reuse                                                    |
 | [extending-context.md](extending-context.md)     | `app.extend({})` and TypeScript module-augmentation pattern                                 |
 | [testing.md](testing.md)                         | vitest + supertest, `withServer` helper, shared-server pattern for multi-request tests      |

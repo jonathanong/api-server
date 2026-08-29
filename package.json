@@ -18,6 +18,14 @@
     "./trusted-client-ip": {
       "types": "./dist/trusted-client-ip.d.mts",
       "import": "./dist/trusted-client-ip.mjs"
+    },
+    "./http-retry": {
+      "types": "./dist/http-retry.d.mts",
+      "import": "./dist/http-retry.mjs"
+    },
+    "./sha256": {
+      "types": "./dist/sha256.d.mts",
+      "import": "./dist/sha256.mjs"
     }
   },
   "engines": {

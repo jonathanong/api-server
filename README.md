@@ -53,6 +53,8 @@ app.route("/").get((ctx) => ctx.json({ ok: true }));
 - **Cookies** — `ctx.cookies.get()` / `.set()` with full `Set-Cookie` options
 - **Cache-Control** — `ctx.cacheControl(visibility, maxAge)` helper
 - **Trusted client IP** — proxy headers are opt-in via `trustProxy`; standalone helpers support Node, Deno, and Bun
+- **HTTP retry primitives** — strict Retry-After parsing, code-based network classification, and pure backoff calculation
+- **SHA-256** — standalone Node digest bytes shared by ETag generation
 - **Dev logger** — concurrent-request bar, color-coded status codes, timing thresholds; silent in `NODE_ENV=production` and `NODE_ENV=test`
 - **Error safety net** — error handlers that throw or return without a response still guarantee the client receives a response
 
@@ -65,24 +67,26 @@ app.route("/").get((ctx) => ctx.json({ ok: true }));
 
 See [docs/](docs/README.md) for full API reference:
 
-| Topic                                              | Description                                         |
-| -------------------------------------------------- | --------------------------------------------------- |
-| [Getting started](docs/getting-started.md)         | Install, hello world, mounting on http.createServer |
-| [Routing](docs/routing.md)                         | Route registration, params, notFoundHandler         |
-| [Context](docs/context.md)                         | Full `ctx` API surface                              |
-| [Request](docs/request.md)                         | Body parsing, size limits, content-type detection   |
-| [Response](docs/response.md)                       | Buffered and streaming responses                    |
-| [ETag and caching](docs/etag-and-caching.md)       | Automatic ETags, 304s, Cache-Control                |
-| [Compression](docs/compression.md)                 | br/gzip/deflate negotiation                         |
-| [Server-Timing](docs/server-timing.md)             | Response latency headers and trailers               |
-| [Cookies](docs/cookies.md)                         | Reading and writing cookies                         |
-| [Error handling](docs/error-handling.md)           | errorHandler, notFoundHandler, http-errors          |
-| [Async local storage](docs/async-local-storage.md) | Per-request store                                   |
-| [Abort signals](docs/abort-signals.md)             | Client-disconnect propagation                       |
-| [Logger](docs/logger.md)                           | Dev logger configuration                            |
-| [Trusted client IP](docs/trusted-client-ip.md)     | Node, Deno, and Bun client IP helpers               |
-| [Extending context](docs/extending-context.md)     | Adding methods to ctx                               |
-| [Testing](docs/testing.md)                         | Testing patterns with vitest and supertest          |
+| Topic                                              | Description                                              |
+| -------------------------------------------------- | -------------------------------------------------------- |
+| [Getting started](docs/getting-started.md)         | Install, hello world, mounting on http.createServer      |
+| [Routing](docs/routing.md)                         | Route registration, params, notFoundHandler              |
+| [Context](docs/context.md)                         | Full `ctx` API surface                                   |
+| [Request](docs/request.md)                         | Body parsing, size limits, content-type detection        |
+| [Response](docs/response.md)                       | Buffered and streaming responses                         |
+| [ETag and caching](docs/etag-and-caching.md)       | Automatic ETags, 304s, Cache-Control                     |
+| [Compression](docs/compression.md)                 | br/gzip/deflate negotiation                              |
+| [Server-Timing](docs/server-timing.md)             | Response latency headers and trailers                    |
+| [Cookies](docs/cookies.md)                         | Reading and writing cookies                              |
+| [Error handling](docs/error-handling.md)           | errorHandler, notFoundHandler, http-errors               |
+| [Async local storage](docs/async-local-storage.md) | Per-request store                                        |
+| [Abort signals](docs/abort-signals.md)             | Client-disconnect propagation                            |
+| [Logger](docs/logger.md)                           | Dev logger configuration                                 |
+| [Trusted client IP](docs/trusted-client-ip.md)     | Node, Deno, and Bun client IP helpers                    |
+| [HTTP retry](docs/http-retry.md)                   | Strict header, Retry-After, network, and backoff helpers |
+| [SHA-256](docs/sha256.md)                          | Node digest helper and ETag reuse                        |
+| [Extending context](docs/extending-context.md)     | Adding methods to ctx                                    |
+| [Testing](docs/testing.md)                         | Testing patterns with vitest and supertest               |
 
 ## Design
 

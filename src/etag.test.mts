@@ -12,6 +12,12 @@ describe("generateETag", () => {
     expect(etag).toMatch(/^"[A-Za-z0-9_-]+"$/);
   });
 
+  it("returns the stable quoted base64url SHA-256 value", () => {
+    expect(generateETag(Buffer.from("hello"))).toBe(
+      '"LPJNul-wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ"',
+    );
+  });
+
   it("same input produces same ETag", () => {
     const input = Buffer.from("hello world");
     expect(generateETag(input)).toBe(generateETag(input));

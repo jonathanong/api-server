@@ -1,8 +1,8 @@
-import crypto from "node:crypto";
 import type { IncomingMessage } from "node:http";
+import { sha256 } from "./sha256.mts";
 
 export function generateETag(body: Buffer): string {
-  const hash = crypto.createHash("sha256").update(body).digest("base64url");
+  const hash = sha256(body).toString("base64url");
   return `"${hash}"`;
 }
 

@@ -11,6 +11,10 @@ pnpm test:watch      # watch mode
 pnpm test:coverage   # coverage report
 ```
 
+Before publishing a new subpath export, verify its built artifact rather than importing source
+files: run `pnpm build`, create a package with `pnpm pack`, install that tarball in a temporary
+consumer, and import each new subpath from the installed package.
+
 Test files live colocated with source as `src/*.test.mts`.
 
 ## Basic pattern
