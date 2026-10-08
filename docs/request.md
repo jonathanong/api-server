@@ -74,9 +74,18 @@ response through the default error handler.
 
 ## request.is(type)
 
-Checks the `Content-Type` header using the `type-is` package. Accepts a single
-string or an array of strings (MIME type shortcuts such as `"json"` and
-`"multipart"` are supported).
+Checks the `Content-Type` header using [type-is](https://github.com/jshttp/type-is).
+Accepts a single string or an array of strings and returns `string | undefined`.
+The built-in shortcuts are `"json"`, `"urlencoded"`, and `"multipart"`; use full
+MIME types for other formats, such as `"text/plain"`.
+
+In v3, a match returns the original input pattern, so matching `"text/*"` returns
+`"text/*"` rather than `"text/plain"`. A missing body, absent content type, no
+match, or empty pattern array returns `undefined` instead of `false` or `null`
+(an empty array previously returned the request's MIME type). Invalid patterns
+throw a `TypeError`, which the default error handler treats as a `500` programmer
+error. Patterns can also include MIME parameters, such as
+`"application/json; charset=utf-8"`.
 
 ```ts
 app.route("/data").post(

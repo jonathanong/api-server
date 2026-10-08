@@ -1,7 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { OversizedBodyStrategy } from "./types.mts";
-// @ts-ignore
-import typeIs from "type-is";
+import { TypeIs } from "type-is";
 // @ts-ignore
 import bytes from "bytes";
 
@@ -26,8 +25,8 @@ export class Request {
     this.oversizedBodyStrategy = oversizedBodyStrategy;
   }
 
-  is(type: string | string[]): string | false | null {
-    return typeIs(this.req, Array.isArray(type) ? type : [type]);
+  is(type: string | string[]): string | undefined {
+    return new TypeIs(Array.isArray(type) ? type : [type]).request(this.req);
   }
 
   buffer(limit?: string | number | false): Promise<Buffer> {
