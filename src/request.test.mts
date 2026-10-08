@@ -17,7 +17,8 @@ describe("Request", () => {
         .post("/test")
         .set("Content-Type", "application/json")
         .send("{}");
-      expect(res.body.isJson).toBeTruthy();
+      expect(res.status).toBe(200);
+      expect(res.body.isJson).toBe("json");
     });
   });
 
@@ -35,7 +36,8 @@ describe("Request", () => {
         .post("/test")
         .set("Content-Type", "text/plain")
         .send("hello");
-      expect(res.body.isJson).toBeFalsy();
+      expect(res.status).toBe(200);
+      expect(res.body).not.toHaveProperty("isJson");
     });
   });
 
@@ -172,7 +174,7 @@ describe("Request", () => {
   it('is(["json"]) with array argument returns truthy for application/json', async () => {
     const app = new Application();
     app.route("/test").post((ctx) => {
-      ctx.json({ isJson: ctx.request.is(["json", "text"]) });
+      ctx.json({ isJson: ctx.request.is(["json", "urlencoded"]) });
     });
 
     await withServer(app.callback(), async (server) => {
@@ -180,7 +182,8 @@ describe("Request", () => {
         .post("/test")
         .set("Content-Type", "application/json")
         .send("{}");
-      expect(res.body.isJson).toBeTruthy();
+      expect(res.status).toBe(200);
+      expect(res.body.isJson).toBe("json");
     });
   });
 
