@@ -24,26 +24,27 @@ export function isSupportedHttpMethod(method: string): boolean {
 }
 
 export function createRouteBuilder(router: RouterInstance, path: string): RouteBuilder {
+  const routeStore = { template: path };
   const builder: RouteBuilder = {
     get(handler) {
-      router.on("GET", path, wrapHandler(handler));
-      router.on("HEAD", path, wrapHandler(handler));
+      router.on("GET", path, wrapHandler(handler), routeStore);
+      router.on("HEAD", path, wrapHandler(handler), routeStore);
       return builder;
     },
     post(handler, options) {
-      router.on("POST", path, wrapHandler(handler, options));
+      router.on("POST", path, wrapHandler(handler, options), routeStore);
       return builder;
     },
     put(handler, options) {
-      router.on("PUT", path, wrapHandler(handler, options));
+      router.on("PUT", path, wrapHandler(handler, options), routeStore);
       return builder;
     },
     delete(handler, options) {
-      router.on("DELETE", path, wrapHandler(handler, options));
+      router.on("DELETE", path, wrapHandler(handler, options), routeStore);
       return builder;
     },
     patch(handler, options) {
-      router.on("PATCH", path, wrapHandler(handler, options));
+      router.on("PATCH", path, wrapHandler(handler, options), routeStore);
       return builder;
     },
   };

@@ -122,6 +122,25 @@ app.route("/posts/:year/:slug").get((ctx) => {
 
 `ctx.params` is typed as `Record<string, string | undefined>`.
 
+## Matching without a request
+
+Use `app.matchRoute(method, path)` to look up a registered route without creating
+a request or running its handler. It returns the registered `template` and
+decoded `params`, or `null` when no route matches:
+
+```ts
+app.route("/users/:email").get((ctx) => ctx.json({ email: ctx.params.email }));
+
+app.matchRoute("GET", "/users/alice%40example.com");
+// { template: "/users/:email", params: { email: "alice@example.com" } }
+```
+
+Lookup uses the same router and path normalization as request dispatch, including
+query-string removal and collapsing leading slashes. The method is passed through
+unchanged. Static routes retain their normal precedence over parameters, and GET
+registrations also match HEAD. This can provide stable route identities for logs
+and diagnostics without treating parameter values as route names.
+
 ## Query string
 
 Query parameters are available on `ctx.query` — see [context.md](context.md).
