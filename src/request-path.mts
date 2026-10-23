@@ -9,3 +9,8 @@ export function getRawPath(url: string): string {
   }
   return url.split("?")[0];
 }
+
+/** Apply the same path normalization before dispatch and public route lookup. */
+export function getRoutePath(url: string): string {
+  return getRawPath(url).replace(/^\/+/, "/") || "/";
+}

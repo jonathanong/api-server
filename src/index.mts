@@ -13,6 +13,7 @@ export * from "./compression.mts";
 export { streamJsonObject } from "./stream-json-object.mts";
 export type { StreamJsonObjectInput } from "./stream-json-object.mts";
 export type { Handler, RouteBuilder } from "./router.mts";
+export type { MatchedRoute } from "./matched-route.mts";
 export type { MutationRouteOptions } from "./mutation-media-type.mts";
 export type {
   CookieOptions,

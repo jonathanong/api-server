@@ -12,7 +12,8 @@ import Router from "find-my-way";
 import { ServerTiming } from "./server-timing.mts";
 import { Logger } from "./logger.mts";
 import type { ApplicationOptions, OversizedBodyStrategy } from "./types.mts";
-import { getRawPath } from "./request-path.mts";
+import { getRoutePath } from "./request-path.mts";
+import { matchRegisteredRoute, type MatchedRoute } from "./matched-route.mts";
 import { createRequestAbortController } from "./request-abort.mts";
 import {
   assertAcceptedMutationMediaType,
@@ -60,6 +61,10 @@ export class Application extends EventEmitter {
 
   route(path: string): RouteBuilder {
     return createRouteBuilder(this.router, path);
+  }
+
+  matchRoute(method: string, path: string): MatchedRoute | null {
+    return matchRegisteredRoute(this.router, method, path);
   }
 
   errorHandler(fn: ErrorHandler): void {
@@ -132,9 +137,7 @@ export class Application extends EventEmitter {
       if (this.strictHttpMethods && !isSupportedHttpMethod(method)) {
         throw Object.assign(new Error("Unsupported HTTP method"), { status: 400 });
       }
-      const url = req.url ?? "/";
-      const rawPath = getRawPath(url);
-      const routePath = rawPath.replace(/^\/+/, "/") || "/";
+      const routePath = getRoutePath(req.url ?? "/");
 
       const found = this.router.find(method as Router.HTTPMethod, routePath);
 
