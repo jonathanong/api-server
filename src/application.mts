@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import type { IncomingMessage, ServerResponse, RequestListener } from "node:http";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import type { AsyncLocalStorage } from "node:async_hooks";
 import { Context, createContextClass } from "./context.mts";
 import {
@@ -79,13 +79,11 @@ export class Application extends EventEmitter {
     this.contextClass = createContextClass(this.extensions);
   }
 
-  callback(): RequestListener {
-    return (req: IncomingMessage, res: ServerResponse) => {
-      this.handleRequest(req, res);
-    };
+  callback(): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
+    return (req, res) => this.handleRequest(req, res);
   }
 
-  private handleRequest(req: IncomingMessage, res: ServerResponse): void {
+  private handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const run = () =>
       this.runRequest(req, res).catch((err: unknown) => {
         const error = err instanceof Error ? err : new Error(safeString(err));
@@ -102,10 +100,9 @@ export class Application extends EventEmitter {
       });
 
     if (this.asyncLocalStorage) {
-      this.asyncLocalStorage.run({}, run);
-    } else {
-      run();
+      return this.asyncLocalStorage.run({}, run);
     }
+    return run();
   }
 
   private async runRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {

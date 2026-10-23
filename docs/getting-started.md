@@ -29,9 +29,11 @@ server.listen(3000, () => {
 
 ## Mounting on an existing server
 
-`app.callback()` returns a plain `(req, res) => void` function that can be
-passed directly to `http.createServer` or any other framework that accepts a
-`RequestListener`.
+`app.callback()` returns a `(req, res) => Promise<void>` function compatible with
+Node's `RequestListener`. The promise settles after the handler and framework
+cleanup finish, including a configured error handler. It can remain pending after
+the HTTP response ends, so callers that own request work can await it explicitly.
+Node's `http.createServer` continues to accept the callback directly.
 
 ```ts
 import { createServer } from "node:http";
